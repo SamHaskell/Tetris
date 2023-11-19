@@ -11,7 +11,7 @@ static Shape s_Shapes[8] = {
             0, 0, 0, 0
         },
         .Color = {
-            0.08, 0.08, 0.08, 1.0
+            0.14, 0.14, 0.18, 1.0
         },
         .ID = 0,        
     },
@@ -207,13 +207,15 @@ static void game_handle_events(Context* context) {
 
 static void game_render_field(Context* context, i32 left, i32 bottom) {
     // Draw the walls.
-    Rect2D rectLeft = Rect2D(left, bottom, 32, (FIELD_HEIGHT * 32));
-    Rect2D rectRight = Rect2D(left + (FIELD_WIDTH + 1) * 32, bottom, 32, (FIELD_HEIGHT * 32));
-    Vec4 color = {0.3, 0.3, 0.3, 1.0};
-
-    // TODO: Replace with some texture?
-    draw_quad_filled(context, color, rectLeft);
-    draw_quad_filled(context, color, rectRight);
+    for (i32 j = 0; j < FIELD_HEIGHT; j++) {
+        Rect2D rectLeft = Rect2D(left, bottom + (j * 32), 32, 32);
+        Rect2D rectRight = Rect2D(left + (FIELD_WIDTH + 1) * 32, bottom + (j * 32), 32, 32);
+        Vec4 color = {0.3, 0.3, 0.3, 1.0};
+        draw_quad_filled(context, color, rectLeft);
+        draw_quad_filled(context, color, rectRight);
+        draw_quad_outline(context, {0.0, 0.0, 0.0, 1.0}, rectLeft);
+        draw_quad_outline(context, {0.0, 0.0, 0.0, 1.0}, rectRight);
+    }
 
     // Draw the cells of the field.
     for (i32 j = 0; j < FIELD_HEIGHT; j++) {
