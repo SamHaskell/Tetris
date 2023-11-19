@@ -11,7 +11,7 @@ static Shape s_Shapes[8] = {
             0, 0, 0, 0
         },
         .Color = {
-            1.0, 1.0, 1.0, 1.0
+            0.08, 0.08, 0.08, 1.0
         },
         .ID = 0,        
     },
@@ -207,37 +207,37 @@ static void game_handle_events(Context* context) {
 
 static void game_render_field(Context* context, i32 left, i32 bottom) {
     // Draw the walls.
-    for (i32 j = 0; j < FIELD_HEIGHT; j++) {
-        Rect2D rectLeft = Rect2D(left, bottom + (j * 32), 32, 32);
-        Rect2D rectRight = Rect2D(left + (FIELD_WIDTH + 1) * 32, bottom + (j * 32), 32, 32);
-        Vec4 color = {0.3, 0.3, 0.3, 1.0};
-        draw_quad_filled(context, color, rectLeft);
-        draw_quad_filled(context, color, rectRight);
-        draw_quad_outline(context, {0.0, 0.0, 0.0, 1.0}, rectLeft);
-        draw_quad_outline(context, {0.0, 0.0, 0.0, 1.0}, rectRight);
-    }
+    Rect2D rectLeft = Rect2D(left, bottom, 32, (FIELD_HEIGHT * 32));
+    Rect2D rectRight = Rect2D(left + (FIELD_WIDTH + 1) * 32, bottom, 32, (FIELD_HEIGHT * 32));
+    Vec4 color = {0.3, 0.3, 0.3, 1.0};
+
+    // TODO: Replace with some texture?
+    draw_quad_filled(context, color, rectLeft);
+    draw_quad_filled(context, color, rectRight);
 
     // Draw the cells of the field.
     for (i32 j = 0; j < FIELD_HEIGHT; j++) {
         for (i32 i = 1; i <= FIELD_WIDTH; i++) {
-            u32 cell = context->GameState->Field[j][i - 1];
+            u32 cell = context->Game->Field[j][i - 1];
             Rect2D rect = Rect2D(left + (i * 32), bottom + (j * 32), 32, 32);
             Vec4 color = s_Shapes[cell].Color;
             draw_quad_filled(context, color, rect);
-            draw_quad_outline(context, {0.0, 0.0, 0.0, 1.0}, rect);
+            if (cell) {
+                draw_quad_outline(context, {0.0, 0.0, 0.0, 1.0}, rect);
+            }
         }
     }
 
     // Draw the players active shape.
-    f32 offsetX = (f32)((context->GameState->PlayerX + 1) * 32);
-    f32 offsetY = (f32)(context->GameState->PlayerY * 32);
-    shape_render(context, context->GameState->ActiveShape, offsetX, offsetY);
+    f32 offsetX = (f32)((context->Game->PlayerX + 1) * 32);
+    f32 offsetY = (f32)(context->Game->PlayerY * 32);
+    shape_render(context, context->Game->ActiveShape, offsetX, offsetY);
 }
 
 static void game_zero_field(Context* context) {
     for (i32 j = 0; j < FIELD_HEIGHT; j++) {
         for (i32 i = 0; i < FIELD_WIDTH; i++) {
-            context->GameState->Field[j][i] = 0;
+            context->Game->Field[j][i] = 0;
         }
     }
 }
@@ -259,9 +259,9 @@ static void field_place_shape(u32* field, Shape shape, i32 shapeX, i32 shapeY) {
 }
 
 static void game_spawn_shape(Context* context, u32 ID) {
-    context->GameState->PlayerX = 3;
-    context->GameState->PlayerY = 14;
-    context->GameState->ActiveShape = s_Shapes[ID];
+    context->Game->PlayerX = 3;
+    context->Game->PlayerY = 14;
+    context->Game->ActiveShape = s_Shapes[ID];
 }
 
 static bool game_check_collision(Context* context, Shape shape, i32 shapeX, i32 shapeY) {
@@ -272,7 +272,7 @@ static bool game_check_collision(Context* context, Shape shape, i32 shapeX, i32 
             bool isBoundary = (col >= FIELD_WIDTH || col < 0) || (row < 0);
             bool fieldVal = isBoundary;
             if (row < FIELD_HEIGHT) {
-                fieldVal |= (bool)(context->GameState->Field[row][col]);
+                fieldVal |= (bool)(context->Game->Field[row][col]);
             }
             bool collision = (bool)shape.Data[(j * 4) + i] && fieldVal;
             if (collision) { 
@@ -285,79 +285,79 @@ static bool game_check_collision(Context* context, Shape shape, i32 shapeX, i32 
 
 static void game_process_inputs(Context* context) {
     if (input_key_was_pressed_this_frame(context->Inputs->Up)) {
-        Shape shape = context->GameState->ActiveShape;
+        Shape shape = context->Game->ActiveShape;
         shape_rotate(shape);
-        if (!game_check_collision(context, shape, context->GameState->PlayerX, context->GameState->PlayerY)) {
-            shape_rotate(context->GameState->ActiveShape);
+        if (!game_check_collision(context, shape, context->Game->PlayerX, context->Game->PlayerY)) {
+            shape_rotate(context->Game->ActiveShape);
         }
     }
 
     if (input_key_was_pressed_this_frame(context->Inputs->Right)) {
         if (!game_check_collision(
             context, 
-            context->GameState->ActiveShape, 
-            context->GameState->PlayerX + 1, 
-            context->GameState->PlayerY
+            context->Game->ActiveShape, 
+            context->Game->PlayerX + 1, 
+            context->Game->PlayerY
             )
         ) {
-            context->GameState->PlayerX ++;
+            context->Game->PlayerX ++;
         }
     }
 
     if (input_key_was_pressed_this_frame(context->Inputs->Left)) {
         if (!game_check_collision(
             context, 
-            context->GameState->ActiveShape, 
-            context->GameState->PlayerX - 1, 
-            context->GameState->PlayerY
+            context->Game->ActiveShape, 
+            context->Game->PlayerX - 1, 
+            context->Game->PlayerY
             )
         ) {
-            context->GameState->PlayerX --;
+            context->Game->PlayerX --;
         }
     }
 
     if (input_key_was_pressed_this_frame(context->Inputs->Down)) {
         if (!game_check_collision(
             context, 
-            context->GameState->ActiveShape, 
-            context->GameState->PlayerX, 
-            context->GameState->PlayerY - 1
+            context->Game->ActiveShape, 
+            context->Game->PlayerX, 
+            context->Game->PlayerY - 1
             )
         ) {
-            context->GameState->PlayerY --;
+            context->Game->PlayerY --;
         } else {
             field_place_shape(
-                context->GameState->Field[0], 
-                context->GameState->ActiveShape,
-                context->GameState->PlayerX,
-                context->GameState->PlayerY
+                context->Game->Field[0], 
+                context->Game->ActiveShape,
+                context->Game->PlayerX,
+                context->Game->PlayerY
             );
             game_spawn_shape(context, RandU32(1, 7));
         }
 
-        context->GameState->ElapsedSinceLastMoveDown = 0.0;
+        context->Game->ElapsedSinceLastMoveDown = 0.0;
     }
 
     if (input_key_was_pressed_this_frame(context->Inputs->Space)) {
         i32 dy = 1;
         while(!game_check_collision(
             context, 
-            context->GameState->ActiveShape, 
-            context->GameState->PlayerX, 
-            context->GameState->PlayerY - dy
+            context->Game->ActiveShape, 
+            context->Game->PlayerX, 
+            context->Game->PlayerY - dy
         )) {
             dy ++;
         }
-        context->GameState->PlayerY -= dy - 1;
+        context->Game->PlayerY -= dy - 1;
         field_place_shape(
-            context->GameState->Field[0], 
-            context->GameState->ActiveShape,
-            context->GameState->PlayerX,
-            context->GameState->PlayerY
+            context->Game->Field[0], 
+            context->Game->ActiveShape,
+            context->Game->PlayerX,
+            context->Game->PlayerY
         );
         game_spawn_shape(context, RandU32(1, 7));
 
-        context->GameState->ElapsedSinceLastMoveDown = 0.0;
+        context->Game->ElapsedSinceLastMoveDown = 0.0;
     }
 }
 
@@ -375,7 +375,7 @@ static bool field_check_line(u32* field, u32 row) {
 static void game_clear_lines(Context* context) {
     u32 lineCount = 0;
     for (i32 j = 0; j < FIELD_HEIGHT; j++) {
-        if (field_check_line(context->GameState->Field[0], j)) {
+        if (field_check_line(context->Game->Field[0], j)) {
             lineCount ++;
         }
     }
@@ -383,48 +383,49 @@ static void game_clear_lines(Context* context) {
 }
 
 void game_init(Context* context) {
-    context->GameState->MainFont = TTF_OpenFont("assets/pico/pico-8.ttf", 36);
-    CX_ASSERT(context->GameState->MainFont != NULL, "Failed to load font!");
+    context->Game->MainFont = TTF_OpenFont("pico/pico-8.ttf", 36);
+    CX_ASSERT(context->Game->MainFont != NULL, "Failed to load font!");
 
     game_zero_field(context);
     game_spawn_shape(context, RandU32(1, 7));
 
-    context->GameState->DeltaTime = 1.0/60.0;
-    context->GameState->ElapsedGameTime = 0.0;
-    context->GameState->ElapsedSinceLastMoveDown = 0.0;
-    context->GameState->TimeToMoveDown = 0.5;
+    context->Game->DeltaTime = 1.0/60.0;
+    context->Game->ElapsedGameTime = 0.0;
+    context->Game->ElapsedSinceLastMoveDown = 0.0;
+    context->Game->TimeToMoveDown = 0.5;
 
     context->MainClock->Tick();
 }
 
-void game_update_and_render(Context* context) {
+void game_update_and_render(void* mem) {
+    Context* context = (Context*)mem;
 
-    CX_INFO("%lf", context->GameState->DeltaTime);
+    CX_INFO("%lf", context->Game->DeltaTime);
 
     game_handle_events(context);
 
     game_process_inputs(context);
 
-    if (context->GameState->ElapsedSinceLastMoveDown > context->GameState->TimeToMoveDown) {
+    if (context->Game->ElapsedSinceLastMoveDown > context->Game->TimeToMoveDown) {
         if (!game_check_collision(
             context, 
-            context->GameState->ActiveShape, 
-            context->GameState->PlayerX, 
-            context->GameState->PlayerY - 1
+            context->Game->ActiveShape, 
+            context->Game->PlayerX, 
+            context->Game->PlayerY - 1
             )
         ) {
-            context->GameState->PlayerY --;
+            context->Game->PlayerY --;
         } else {
             field_place_shape(
-                context->GameState->Field[0], 
-                context->GameState->ActiveShape,
-                context->GameState->PlayerX,
-                context->GameState->PlayerY
+                context->Game->Field[0], 
+                context->Game->ActiveShape,
+                context->Game->PlayerX,
+                context->Game->PlayerY
             );
             game_spawn_shape(context, RandU32(1, 7));
         }
 
-        context->GameState->ElapsedSinceLastMoveDown = 0.0;
+        context->Game->ElapsedSinceLastMoveDown = 0.0;
     }
 
     game_clear_lines(context);
@@ -433,7 +434,7 @@ void game_update_and_render(Context* context) {
 
     draw_text(
         context,
-        context->GameState->MainFont,
+        context->Game->MainFont,
         "tetris!",
         {1.0, 1.0, 1.0, 1.0},
         464, 50
@@ -441,7 +442,7 @@ void game_update_and_render(Context* context) {
 
     game_swap_buffers(context);
 
-    context->GameState->DeltaTime = context->MainClock->Tick();
-    context->GameState->ElapsedGameTime += context->GameState->DeltaTime;
-    context->GameState->ElapsedSinceLastMoveDown += context->GameState->DeltaTime;
+    context->Game->DeltaTime = context->MainClock->Tick();
+    context->Game->ElapsedGameTime += context->Game->DeltaTime;
+    context->Game->ElapsedSinceLastMoveDown += context->Game->DeltaTime;
 }

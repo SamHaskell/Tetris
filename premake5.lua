@@ -43,6 +43,8 @@ project "Tetris"
         targetsuffix ""
         targetextension (".html")
 
+        defines { "CORTEX_NO_LOGGING" }
+
         buildoptions {
             "-s USE_SDL=2",
             "-s USE_SDL_TTF=2",

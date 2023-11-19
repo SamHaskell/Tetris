@@ -11,7 +11,14 @@ struct Context;
 #define FIELD_GET_ROW(i) (i32)(i / FIELD_WIDTH)
 #define FIELD_GET_COL(i) (i32)(i % FIELD_WIDTH)
 
-struct GameState {
+enum class GameState {
+    Start,
+    Paused,
+    Playing,
+    GameOver
+};
+
+struct Game {
     TTF_Font* MainFont;
     u32 Field[FIELD_HEIGHT][FIELD_WIDTH];
     i32 PlayerX;
@@ -21,7 +28,8 @@ struct GameState {
     f64 ElapsedGameTime = 0.0;
     f64 ElapsedSinceLastMoveDown = 0.0;
     f64 TimeToMoveDown = 0.5;
+    GameState GameState;
 };
 
 void game_init(Context* context);
-void game_update_and_render(Context* context);
+void game_update_and_render(void* mem);

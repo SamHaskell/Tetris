@@ -27,7 +27,7 @@ struct PlayerInputs {
     KeyState Back;
 };
 
-struct GameState;
+struct Game;
 
 struct Context {
     bool IsRunning;
@@ -37,7 +37,7 @@ struct Context {
     SDL_Renderer* Renderer;
     PlayerInputs* Inputs;
     Utils::Clock* MainClock;
-    GameState* GameState;
+    Game* Game;
 };
 
 void draw_quad_filled(Context* context, Vec4 color, Rect2D rect);

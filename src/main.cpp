@@ -6,7 +6,7 @@ int main(int argc, char* argv[]) {
 
     Context* context = new Context();
 
-    i32 ok = SDL_Init(SDL_INIT_EVERYTHING);
+    i32 ok = SDL_Init(SDL_INIT_VIDEO);
     CX_ASSERT(ok == 0, "SDL failed to initialise.");
 
     context->WindowHandle = SDL_CreateWindow(
@@ -18,7 +18,7 @@ int main(int argc, char* argv[]) {
     CX_ASSERT(context->WindowHandle != NULL, "SDL failed to create a valid window.");
     SDL_GetWindowSize(context->WindowHandle, &context->WindowWidth, &context->WindowHeight);
 
-    context->Renderer = SDL_CreateRenderer(context->WindowHandle, -1, 0);
+    context->Renderer = SDL_CreateRenderer(context->WindowHandle, -1, SDL_RENDERER_PRESENTVSYNC);
     CX_ASSERT(context->Renderer != NULL, "SDL failed to create a valid rendering context.");
 
     ok = TTF_Init();
@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
 
     context->IsRunning = true;
     context->Inputs = new PlayerInputs();
-    context->GameState = new GameState();
+    context->Game = new Game();
     context->MainClock = new Utils::Clock();
 
     SetGlobalSeed(SDL_GetPerformanceCounter());
@@ -47,7 +47,7 @@ int main(int argc, char* argv[]) {
     SDL_DestroyWindow(context->WindowHandle);
     SDL_Quit();
 
-    delete context->GameState;
+    delete context->Game;
     delete context->Inputs;
     delete context;
     context = nullptr;
