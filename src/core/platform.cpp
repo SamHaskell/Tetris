@@ -64,5 +64,5 @@ void draw_text(Context* context, TTF_Font* font, const char* text, Vec4 color, i
 
     SDL_RenderCopy(context->Renderer, tex, NULL, &dst);
 
-    // SDL_DestroyTexture(tex);
+    SDL_DestroyTexture(tex);
 }

@@ -383,7 +383,7 @@ static void game_clear_lines(Context* context) {
 }
 
 void game_init(Context* context) {
-    context->GameState->MainFont = TTF_OpenFont("assets/pico/pico-8.ttf", 12);
+    context->GameState->MainFont = TTF_OpenFont("assets/pico/pico-8.ttf", 36);
     CX_ASSERT(context->GameState->MainFont != NULL, "Failed to load font!");
 
     game_zero_field(context);
@@ -434,9 +434,9 @@ void game_update_and_render(Context* context) {
     draw_text(
         context,
         context->GameState->MainFont,
-        "this is a test",
+        "tetris!",
         {1.0, 1.0, 1.0, 1.0},
-        0, 0
+        464, 50
     );
 
     game_swap_buffers(context);
