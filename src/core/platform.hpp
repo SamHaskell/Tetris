@@ -1,5 +1,6 @@
+#pragma once
+
 #include "core/base.h"
-#include "core/game.hpp"
 #include "maths/linalg.hpp"
 #include "maths/geometry.hpp"
 
@@ -20,7 +21,10 @@ struct PlayerInputs {
     KeyState Down;
     KeyState Left;
     KeyState Space;
+    KeyState Back;
 };
+
+struct GameState;
 
 struct Context {
     bool IsRunning;

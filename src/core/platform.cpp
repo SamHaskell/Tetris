@@ -1,4 +1,5 @@
 #include "core/platform.hpp"
+#include "core/game.hpp"
 
 void draw_quad_filled(Context* context, Vec4 color, Rect2D rect) {
     SDL_SetRenderDrawColor(

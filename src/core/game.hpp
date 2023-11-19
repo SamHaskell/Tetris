@@ -12,10 +12,11 @@ struct Context;
 #define FIELD_GET_COL(i) (i32)(i % FIELD_WIDTH)
 
 struct GameState {
-    u32 Field[FIELD_WIDTH][FIELD_HEIGHT];
+    u32 Field[FIELD_HEIGHT][FIELD_WIDTH];
     i32 PlayerX;
     i32 PlayerY;
     Shape ActiveShape;
 };
 
+void game_init(Context* context);
 void game_update_and_render(Context* context);

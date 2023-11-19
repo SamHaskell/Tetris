@@ -23,6 +23,8 @@ int main(int argc, char* argv[]) {
     context->Inputs = new PlayerInputs();
     context->GameState = new GameState();
 
+    game_init(context);
+
 #if CORTEX_PLATFORM_WEB
     emscripten_set_main_loop_arg(game_update_and_render, (void*)context, 60, true);
 #else

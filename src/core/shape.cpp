@@ -14,6 +14,10 @@ void shape_rotate(Shape& shape) {
     memcpy(&shape.Data, &rotatedData, 16 * sizeof(u32));
 }
 
+/*
+    Draws the 128 x 128 shape, where (x, y) is the bottom-left corner
+*/
+
 void shape_render(Context* context, Shape& shape, f32 x, f32 y) {
     draw_quad_outline(context, {1.0, 0.0, 0.0, 1.0}, {x, y, 128.0, 128.0});
     for (i32 j = 0; j < 4; j++) {
