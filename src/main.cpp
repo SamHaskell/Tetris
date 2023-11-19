@@ -1,7 +1,9 @@
 #include "core/platform.hpp"
 #include "core/game.hpp"
+#include "maths/random.hpp"
 
 int main(int argc, char* argv[]) {
+
     Context* context = new Context();
 
     i32 ok = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
@@ -22,6 +24,9 @@ int main(int argc, char* argv[]) {
     context->IsRunning = true;
     context->Inputs = new PlayerInputs();
     context->GameState = new GameState();
+    context->MainClock = new Utils::Clock();
+
+    SetGlobalSeed(SDL_GetPerformanceCounter());
 
     game_init(context);
 

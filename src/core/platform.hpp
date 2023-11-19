@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/base.h"
+#include "core/utils.hpp"
 #include "maths/linalg.hpp"
 #include "maths/geometry.hpp"
 
@@ -33,6 +34,7 @@ struct Context {
     SDL_Window* WindowHandle;
     SDL_Renderer* Renderer;
     PlayerInputs* Inputs;
+    Utils::Clock* MainClock;
     GameState* GameState;
 };
 

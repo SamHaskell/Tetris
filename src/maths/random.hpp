@@ -14,6 +14,8 @@ Vec3 RandVec3();
 Mat2x2 RandMat2();
 Mat3x3 RandMat3();
 
+void SetGlobalSeed(u32 seed);
+
 inline f32 RandFloat(u32& seed) {
     seed = Utils::HashPCG(seed);
     return (f32)seed / (f32)UINT32_MAX;

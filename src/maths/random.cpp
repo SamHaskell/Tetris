@@ -2,6 +2,10 @@
 
 static u32 s_Seed;
 
+void SetGlobalSeed(u32 seed) {
+    s_Seed = seed;
+}
+
 f32 RandFloat() {
     return RandFloat(s_Seed);
 }

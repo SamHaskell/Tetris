@@ -16,6 +16,10 @@ struct GameState {
     i32 PlayerX;
     i32 PlayerY;
     Shape ActiveShape;
+    f64 DeltaTime = 0.0;
+    f64 ElapsedGameTime = 0.0;
+    f64 ElapsedSinceLastMoveDown = 0.0;
+    f64 TimeToMoveDown = 0.5;
 };
 
 void game_init(Context* context);

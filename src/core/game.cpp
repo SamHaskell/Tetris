@@ -283,14 +283,7 @@ static bool game_check_collision(Context* context, Shape shape, i32 shapeX, i32 
     return false;
 }
 
-void game_init(Context* context) {
-    game_zero_field(context);
-    game_spawn_shape(context, RandU32(1, 7));
-}
-
-void game_update_and_render(Context* context) {
-    game_handle_events(context);
-
+static void game_process_inputs(Context* context) {
     if (input_key_was_pressed_this_frame(context->Inputs->Up)) {
         Shape shape = context->GameState->ActiveShape;
         shape_rotate(shape);
@@ -332,7 +325,17 @@ void game_update_and_render(Context* context) {
             )
         ) {
             context->GameState->PlayerY --;
+        } else {
+            field_place_shape(
+                context->GameState->Field[0], 
+                context->GameState->ActiveShape,
+                context->GameState->PlayerX,
+                context->GameState->PlayerY
+            );
+            game_spawn_shape(context, RandU32(1, 7));
         }
+
+        context->GameState->ElapsedSinceLastMoveDown = 0.0;
     }
 
     if (input_key_was_pressed_this_frame(context->Inputs->Space)) {
@@ -353,9 +356,58 @@ void game_update_and_render(Context* context) {
             context->GameState->PlayerY
         );
         game_spawn_shape(context, RandU32(1, 7));
+
+        context->GameState->ElapsedSinceLastMoveDown = 0.0;
+    }
+}
+
+void game_init(Context* context) {
+    game_zero_field(context);
+    game_spawn_shape(context, RandU32(1, 7));
+
+    context->GameState->DeltaTime = 1.0/60.0;
+    context->GameState->ElapsedGameTime = 0.0;
+    context->GameState->ElapsedSinceLastMoveDown = 0.0;
+    context->GameState->TimeToMoveDown = 0.5;
+
+    context->MainClock->Tick();
+}
+
+void game_update_and_render(Context* context) {
+
+    CX_INFO("%lf", context->GameState->DeltaTime);
+
+    game_handle_events(context);
+
+    game_process_inputs(context);
+
+    if (context->GameState->ElapsedSinceLastMoveDown > context->GameState->TimeToMoveDown) {
+        if (!game_check_collision(
+            context, 
+            context->GameState->ActiveShape, 
+            context->GameState->PlayerX, 
+            context->GameState->PlayerY - 1
+            )
+        ) {
+            context->GameState->PlayerY --;
+        } else {
+            field_place_shape(
+                context->GameState->Field[0], 
+                context->GameState->ActiveShape,
+                context->GameState->PlayerX,
+                context->GameState->PlayerY
+            );
+            game_spawn_shape(context, RandU32(1, 7));
+        }
+
+        context->GameState->ElapsedSinceLastMoveDown = 0.0;
     }
 
     game_render_field(context, 0, 0);
 
     game_swap_buffers(context);
+
+    context->GameState->DeltaTime = context->MainClock->Tick();
+    context->GameState->ElapsedGameTime += context->GameState->DeltaTime;
+    context->GameState->ElapsedSinceLastMoveDown += context->GameState->DeltaTime;
 }
