@@ -361,6 +361,27 @@ static void game_process_inputs(Context* context) {
     }
 }
 
+static bool field_check_line(u32* field, u32 row) {
+    bool isFull = true;
+    for (i32 i = 0; i < FIELD_WIDTH; i++) {
+        if (!field[row * FIELD_WIDTH + i]) {
+            isFull = false;
+            break;
+        }
+    }
+    return isFull;
+}
+
+static void game_clear_lines(Context* context) {
+    u32 lineCount = 0;
+    for (i32 j = 0; j < FIELD_HEIGHT; j++) {
+        if (field_check_line(context->GameState->Field[0], j)) {
+            lineCount ++;
+        }
+    }
+    CX_DEBUG("Lines Full: %u", lineCount);
+}
+
 void game_init(Context* context) {
     game_zero_field(context);
     game_spawn_shape(context, RandU32(1, 7));
@@ -402,6 +423,8 @@ void game_update_and_render(Context* context) {
 
         context->GameState->ElapsedSinceLastMoveDown = 0.0;
     }
+
+    game_clear_lines(context);
 
     game_render_field(context, 0, 0);
 
