@@ -7,8 +7,10 @@
 
 #if CORTEX_PLATFORM_WEB
     #include "SDL.h"
+    #include "SDL_ttf.h"
 #else
     #include <SDL2/SDL.h>
+    #include <SDL2/SDL_ttf.h>
 #endif
 
 struct KeyState {
@@ -40,3 +42,5 @@ struct Context {
 
 void draw_quad_filled(Context* context, Vec4 color, Rect2D rect);
 void draw_quad_outline(Context* context, Vec4 color, Rect2D rect);
+
+void draw_text(Context* context, TTF_Font* font, const char* text, Vec4 color, i32 left, i32 bottom);

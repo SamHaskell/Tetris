@@ -12,6 +12,7 @@ struct Context;
 #define FIELD_GET_COL(i) (i32)(i % FIELD_WIDTH)
 
 struct GameState {
+    TTF_Font* MainFont;
     u32 Field[FIELD_HEIGHT][FIELD_WIDTH];
     i32 PlayerX;
     i32 PlayerY;

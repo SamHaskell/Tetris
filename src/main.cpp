@@ -6,7 +6,7 @@ int main(int argc, char* argv[]) {
 
     Context* context = new Context();
 
-    i32 ok = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
+    i32 ok = SDL_Init(SDL_INIT_EVERYTHING);
     CX_ASSERT(ok == 0, "SDL failed to initialise.");
 
     context->WindowHandle = SDL_CreateWindow(
@@ -20,6 +20,9 @@ int main(int argc, char* argv[]) {
 
     context->Renderer = SDL_CreateRenderer(context->WindowHandle, -1, 0);
     CX_ASSERT(context->Renderer != NULL, "SDL failed to create a valid rendering context.");
+
+    ok = TTF_Init();
+    CX_ASSERT(ok == 0, "TTF failed to initialise.");
 
     context->IsRunning = true;
     context->Inputs = new PlayerInputs();
@@ -37,6 +40,8 @@ int main(int argc, char* argv[]) {
         game_update_and_render(context);
     }
 #endif
+
+    TTF_Quit();
 
     SDL_DestroyRenderer(context->Renderer);
     SDL_DestroyWindow(context->WindowHandle);

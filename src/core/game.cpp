@@ -383,6 +383,9 @@ static void game_clear_lines(Context* context) {
 }
 
 void game_init(Context* context) {
+    context->GameState->MainFont = TTF_OpenFont("assets/pico/pico-8.ttf", 12);
+    CX_ASSERT(context->GameState->MainFont != NULL, "Failed to load font!");
+
     game_zero_field(context);
     game_spawn_shape(context, RandU32(1, 7));
 
@@ -427,6 +430,14 @@ void game_update_and_render(Context* context) {
     game_clear_lines(context);
 
     game_render_field(context, 0, 0);
+
+    draw_text(
+        context,
+        context->GameState->MainFont,
+        "this is a test",
+        {1.0, 1.0, 1.0, 1.0},
+        0, 0
+    );
 
     game_swap_buffers(context);
 

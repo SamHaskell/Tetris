@@ -34,7 +34,7 @@ project "Tetris"
 
     filter "platforms:macosx"
         targetextension ("")
-        links { "SDL2" }
+        links { "SDL2", "SDL2_TTF" }
 
 
     filter "platforms:web"
@@ -45,10 +45,12 @@ project "Tetris"
 
         buildoptions {
             "-s USE_SDL=2",
+            "-s USE_SDL_TTF=2",
         }
 
         linkoptions {
             "-s USE_SDL=2",
+            "-s USE_SDL_TTF=2",
             "-s ALLOW_MEMORY_GROWTH",
             "--preload-file ../assets@/",
         }
