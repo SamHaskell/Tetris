@@ -1,6 +1,92 @@
 #include "core/platform.hpp"
 #include "core/game.hpp"
 
+#include "maths/random.hpp"
+
+Context* platform_init() {
+    Context* context = new Context();
+
+    /*
+        Initialising SDL. Note we only intiialised Video, since we are targeting emscripten.
+    */
+
+    i32 ok = SDL_Init(SDL_INIT_VIDEO);
+    CX_ASSERT(ok == 0, "SDL failed to initialise.");
+
+    /*
+        Create a window.
+        TODO: Pull hard-coded windowdims out.
+    */
+
+    context->WindowHandle = SDL_CreateWindow(
+        "Tetris!",
+        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+        704, 576,
+        SDL_WINDOW_BORDERLESS
+    );
+
+    CX_ASSERT(context->WindowHandle != NULL, "SDL failed to create a valid window.");
+    SDL_GetWindowSize(context->WindowHandle, &context->WindowWidth, &context->WindowHeight);
+
+    /*
+        Create SDL renderer. Must set blend mode to allow for alpha blending and transparency.
+    */
+
+    context->Renderer = SDL_CreateRenderer(context->WindowHandle, -1, SDL_RENDERER_PRESENTVSYNC);
+    CX_ASSERT(context->Renderer != NULL, "SDL failed to create a valid rendering context.");
+
+    SDL_SetRenderDrawBlendMode(context->Renderer, SDL_BLENDMODE_BLEND);
+
+    /*
+        Initialise SoLoud engine.
+    */
+
+    context->AudioEngine.init();
+
+
+    /*
+        Initialise SDL_TTF.
+    */
+    
+    ok = TTF_Init();
+    CX_ASSERT(ok == 0, "TTF failed to initialise.");
+
+    /*
+        Set game to run, create Input and Game data structs, initialise the Main Clock.
+    */
+
+    context->IsRunning = true;
+    context->Inputs = new PlayerInputs();
+    context->Game = new Game();
+    context->MainClock = new Utils::Clock();
+
+    /*
+        Seed the PRNG.
+    */
+
+    SetGlobalSeed(SDL_GetPerformanceCounter());
+
+    return context;
+}
+
+void platform_shutdown(Context* context) {
+    TTF_Quit();
+
+    SDL_DestroyRenderer(context->Renderer);
+    SDL_DestroyWindow(context->WindowHandle);
+    SDL_Quit();
+
+    delete context->Game;
+    delete context->Inputs;
+    delete context;
+    context = nullptr;
+}
+
+void platform_main_loop(void* memory) {
+    Context* context = (Context*)memory;
+    game_update_and_render(context);
+}
+
 void draw_quad_filled(Context* context, Vec4 color, Rect2D rect) {
     SDL_SetRenderDrawColor(
         context->Renderer,

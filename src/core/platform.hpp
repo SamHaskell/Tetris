@@ -2,6 +2,7 @@
 
 #include "core/base.h"
 #include "core/utils.hpp"
+#include "core/input.hpp"
 #include "maths/linalg.hpp"
 #include "maths/geometry.hpp"
 
@@ -14,23 +15,6 @@
     #include <SDL2/SDL.h>
     #include <SDL2/SDL_ttf.h>
 #endif
-
-struct KeyState {
-    bool IsDown = false;
-    bool IsRepeat = false;
-    u32 TransitionCount = 0;
-
-};
-
-struct PlayerInputs {
-    KeyState Up;
-    KeyState Right;
-    KeyState Down;
-    KeyState Left;
-    KeyState Space;
-    KeyState Back;
-    KeyState Swap;
-};
 
 struct Game;
 
@@ -45,6 +29,10 @@ struct Context {
     Utils::Clock* MainClock;
     Game* Game;
 };
+
+Context* platform_init();
+void platform_shutdown(Context* context);
+void platform_main_loop(void* memory);
 
 void draw_quad_filled(Context* context, Vec4 color, Rect2D rect);
 void draw_quad_outline(Context* context, Vec4 color, Rect2D rect);

@@ -127,18 +127,6 @@ static void game_quit(Context* context) {
     #endif
 }
 
-static void input_set_keystate(KeyState& keystate, bool isDown, bool isRepeat) {
-    if (isDown != keystate.IsDown) {
-        keystate.TransitionCount ++;
-    }
-    keystate.IsDown = isDown;
-    keystate.IsRepeat = isRepeat;
-}
-
-static bool input_key_was_pressed_this_frame(KeyState& KeyState) {
-    return (KeyState.IsDown && (KeyState.TransitionCount > 0));
-}
-
 static void game_handle_events(Context* context) {
     context->Inputs->Left.TransitionCount = 0;
     context->Inputs->Right.TransitionCount = 0;
@@ -470,7 +458,7 @@ static void gamestate_playing_update(Context* context) {
         }
     }
 
-    context->Game->TimeToMoveDown = (context->Inputs->Down.IsDown && (context->Inputs->Down.TransitionCount == 0)) ? 0.1 : 0.8;
+    context->Game->TimeToMoveDown = input_key_was_held_this_frame(context->Inputs->Down) ? 0.1 : 0.8;
 
     if (input_key_was_pressed_this_frame(context->Inputs->Down)) {
         if (!game_check_collision(
@@ -582,9 +570,7 @@ void game_init(Context* context) {
     context->Game->GameState = GameState::Start;
 }
 
-void game_update_and_render(void* mem) {
-    Context* context = (Context*)mem;
-    
+void game_update_and_render(Context* context) {
     game_handle_events(context);
 
     switch (context->Game->GameState) {
@@ -600,7 +586,6 @@ void game_update_and_render(void* mem) {
         case GameState::GameOver:
             gamestate_gameover_update(context);
             break;
-
     }
 
     game_render_field(context, 0, 0);

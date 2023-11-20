@@ -2,6 +2,7 @@
 
 #include "core/base.h"
 #include "core/shape.hpp"
+#include "core/input.hpp"
 
 #include "soloud_wav.h"
 
@@ -46,4 +47,4 @@ struct Game {
 };
 
 void game_init(Context* context);
-void game_update_and_render(void* mem);
+void game_update_and_render(Context* context);
