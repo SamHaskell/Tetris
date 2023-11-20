@@ -82,10 +82,111 @@ void platform_shutdown(Context* context) {
     context = nullptr;
 }
 
+void platform_quit(Context* context) {
+    #if CORTEX_PLATFORM_WEB
+        emscripten_cancel_main_loop();
+    #else
+        context->IsRunning = false;
+    #endif
+}
+
 void platform_main_loop(void* memory) {
     Context* context = (Context*)memory;
     f64 dt = context->MainClock->Tick();
+    
+    platform_process_events(context);
     game_update_and_render(context, dt);
+}
+
+void platform_process_events(Context* context) {
+    context->Inputs->Left.TransitionCount = 0;
+    context->Inputs->Right.TransitionCount = 0;
+    context->Inputs->Up.TransitionCount = 0;
+    context->Inputs->Down.TransitionCount = 0;
+    context->Inputs->Space.TransitionCount = 0;
+    context->Inputs->Back.TransitionCount = 0;
+
+    SDL_Event e;
+    while (SDL_PollEvent(&e)) {
+        switch (e.type) {
+            case SDL_QUIT:
+                platform_quit(context);
+            case SDL_KEYDOWN:
+                switch (e.key.keysym.sym) {
+                    case SDLK_a:
+                        input_set_keystate(context->Inputs->Left, true, (e.key.repeat != 0));
+                        break;
+                    case SDLK_d:
+                        input_set_keystate(context->Inputs->Right, true, (e.key.repeat != 0));
+                        break;
+                    case SDLK_s:
+                        input_set_keystate(context->Inputs->Down, true, (e.key.repeat != 0));
+                        break;
+                    case SDLK_w:
+                        input_set_keystate(context->Inputs->Up, true, (e.key.repeat != 0));
+                        break;
+                    case SDLK_LEFT:
+                        input_set_keystate(context->Inputs->Left, true, (e.key.repeat != 0));
+                        break;
+                    case SDLK_RIGHT:
+                        input_set_keystate(context->Inputs->Right, true, (e.key.repeat != 0));
+                        break;
+                    case SDLK_DOWN:
+                        input_set_keystate(context->Inputs->Down, true, (e.key.repeat != 0));
+                        break;
+                    case SDLK_UP:
+                        input_set_keystate(context->Inputs->Up, true, (e.key.repeat != 0));
+                        break;
+                    case SDLK_SPACE:
+                        input_set_keystate(context->Inputs->Space, true, (e.key.repeat != 0));
+                        break;
+                    case SDLK_ESCAPE:
+                        input_set_keystate(context->Inputs->Back, true, (e.key.repeat != 0));
+                        break;
+                    case SDLK_e:
+                        input_set_keystate(context->Inputs->Swap, true, (e.key.repeat != 0));
+                        break;
+                }
+                break;
+            case SDL_KEYUP:
+                switch (e.key.keysym.sym) {
+                    case SDLK_a:
+                        input_set_keystate(context->Inputs->Left, false, (e.key.repeat != 0));
+                        break;
+                    case SDLK_d:
+                        input_set_keystate(context->Inputs->Right, false, (e.key.repeat != 0));
+                        break;
+                    case SDLK_s:
+                        input_set_keystate(context->Inputs->Down, false, (e.key.repeat != 0));
+                        break;
+                    case SDLK_w:
+                        input_set_keystate(context->Inputs->Up, false, (e.key.repeat != 0));
+                        break;
+                    case SDLK_LEFT:
+                        input_set_keystate(context->Inputs->Left, false, (e.key.repeat != 0));
+                        break;
+                    case SDLK_RIGHT:
+                        input_set_keystate(context->Inputs->Right, false, (e.key.repeat != 0));
+                        break;
+                    case SDLK_DOWN:
+                        input_set_keystate(context->Inputs->Down, false, (e.key.repeat != 0));
+                        break;
+                    case SDLK_UP:
+                        input_set_keystate(context->Inputs->Up, false, (e.key.repeat != 0));
+                        break;
+                    case SDLK_SPACE:
+                        input_set_keystate(context->Inputs->Space, false, (e.key.repeat != 0));
+                        break;
+                    case SDLK_ESCAPE:
+                        input_set_keystate(context->Inputs->Back, false, (e.key.repeat != 0));
+                        break;
+                    case SDLK_e:
+                        input_set_keystate(context->Inputs->Swap, false, (e.key.repeat != 0));
+                        break;
+                }
+                break;
+        }
+    }
 }
 
 void draw_quad_filled(Context* context, Vec4 color, Rect2D rect) {
