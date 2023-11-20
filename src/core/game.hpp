@@ -1,18 +1,13 @@
 #pragma once
 
 #include "core/base.h"
+#include "core/field.hpp"
 #include "core/shape.hpp"
 #include "core/input.hpp"
 
 #include "soloud_wav.h"
 
 struct Context;
-
-#define FIELD_WIDTH 10
-#define FIELD_HEIGHT 18
-#define FIELD_SIZE (FIELD_WIDTH * FIELD_HEIGHT)
-#define FIELD_GET_ROW(i) (i32)(i / FIELD_WIDTH)
-#define FIELD_GET_COL(i) (i32)(i % FIELD_WIDTH)
 
 #define FONT_SIZE_LARGE 36
 #define FONT_SIZE_MEDIUM 24
@@ -47,4 +42,5 @@ struct Game {
 };
 
 void game_init(Context* context);
+void game_shutdown(Context* context);
 void game_update_and_render(Context* context, f64 dt);

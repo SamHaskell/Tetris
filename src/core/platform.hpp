@@ -38,7 +38,9 @@ Context* platform_init();
 void platform_shutdown(Context* context);
 void platform_quit(Context* context);
 void platform_main_loop(void* memory);
+
 void platform_process_events(Context* context);
+void platform_swap_buffers(Context* context);
 
 /*
     Basic platform rendering API

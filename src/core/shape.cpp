@@ -29,3 +29,9 @@ void shape_render(Context* context, Shape& shape, f32 x, f32 y) {
         }
     }
 }
+
+void shape_swap(Shape& a, Shape& b) {
+    Shape temp = a;
+    a = b;
+    b = temp;
+}

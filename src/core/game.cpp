@@ -102,24 +102,6 @@ static Shape s_Shapes[8] = {
 };
 
 /*
-    Miscellaneous functions, platform actions etc.
-*/
-
-static void game_swap_buffers(Context* context) {
-    SDL_RenderPresent(context->Renderer);
-    SDL_SetRenderDrawColor(context->Renderer, 20, 20, 20, 20);
-    SDL_RenderClear(context->Renderer);
-}
-
-static void game_swap_shapes(Context* context) {
-    context->Game->PlayerX = 3;
-    context->Game->PlayerY = 16;
-    Shape temp = context->Game->ActiveShape;
-    context->Game->ActiveShape = context->Game->NextShape;
-    context->Game->NextShape = temp;
-}
-
-/*
     Rendering.
 */
 
@@ -172,32 +154,7 @@ static void game_render_shape_preview(Context* context, i32 left, i32 bottom) {
     Logic helpers.
 */
 
-static void field_set_cell(u32* field, u32 row, u32 col, u32 value) {
-    field[(row * FIELD_WIDTH) + col] = value;
-}
 
-static void field_place_shape(u32* field, Shape shape, i32 shapeX, i32 shapeY) {
-    for (i32 i = 0; i < 4; i++) {
-        for (i32 j = 0; j < 4; j++) { 
-            i32 row = (3 - j) + shapeY;
-            i32 col = i + shapeX; 
-            if (shape.Data[(j * 4) + i]) {
-                field_set_cell(field, row, col, shape.ID);
-            }
-        }
-    }
-}
-
-static bool field_check_line(u32* field, u32 row) {
-    bool isFull = true;
-    for (i32 i = 0; i < FIELD_WIDTH; i++) {
-        if (!field[row * FIELD_WIDTH + i]) {
-            isFull = false;
-            break;
-        }
-    }
-    return isFull;
-}
 
 static void game_next_shape(Context* context, u32 ID) {
     context->Game->PlayerX = 3;
@@ -303,7 +260,9 @@ static void gamestate_playing_update(Context* context) {
     }
 
     if (input_key_was_pressed_this_frame(context->Inputs->Swap) && context->Game->CanSwap) {
-        game_swap_shapes(context);
+        shape_swap(context->Game->ActiveShape, context->Game->NextShape);
+        context->Game->PlayerX = 3;
+        context->Game->PlayerY = 16;
         context->Game->CanSwap = false;
     }
 
@@ -465,10 +424,11 @@ void game_init(Context* context) {
     context->Game->KickSFX.load("audio/click2.wav");
     context->Game->KickSFX.setLooping(0);
 
-    context->Game->DeltaTime = 1.0/60.0;
-    context->MainClock->Tick();
-
     context->Game->GameState = GameState::Start;
+}
+
+void game_shutdown(Context* context) {
+    // TODO: Clean up resources here.
 }
 
 void game_update_and_render(Context* context, f64 dt) {
@@ -548,8 +508,6 @@ void game_update_and_render(Context* context, f64 dt) {
             (context->WindowHeight / 2) - 24
         );
     }
-
-    game_swap_buffers(context);
 
     context->Game->ElapsedGameTime += dt;
     context->Game->ElapsedSinceLastMoveDown += dt;

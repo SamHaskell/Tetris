@@ -66,10 +66,15 @@ Context* platform_init() {
 
     SetGlobalSeed(SDL_GetPerformanceCounter());
 
+    game_init(context);
+
     return context;
 }
 
 void platform_shutdown(Context* context) {
+
+    game_shutdown(context);
+
     TTF_Quit();
 
     SDL_DestroyRenderer(context->Renderer);
@@ -96,6 +101,8 @@ void platform_main_loop(void* memory) {
     
     platform_process_events(context);
     game_update_and_render(context, dt);
+
+    platform_swap_buffers(context);
 }
 
 void platform_process_events(Context* context) {
@@ -187,6 +194,16 @@ void platform_process_events(Context* context) {
                 break;
         }
     }
+}
+
+/*
+    Swaps buffers and clears the new backbuffer to magenta.
+*/
+
+void platform_swap_buffers(Context* context) {
+    SDL_RenderPresent(context->Renderer);
+    SDL_SetRenderDrawColor(context->Renderer, 255, 0, 255, 255);
+    SDL_RenderClear(context->Renderer);
 }
 
 void draw_quad_filled(Context* context, Vec4 color, Rect2D rect) {
