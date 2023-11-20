@@ -154,33 +154,12 @@ static void game_render_shape_preview(Context* context, i32 left, i32 bottom) {
     Logic helpers.
 */
 
-
-
 static void game_next_shape(Context* context, u32 ID) {
     context->Game->PlayerX = 3;
     context->Game->PlayerY = 16;
     context->Game->ActiveShape = context->Game->NextShape;
     context->Game->NextShape = s_Shapes[ID];
     context->Game->CanSwap = true;
-}
-
-static bool game_check_collision(Context* context, Shape shape, i32 shapeX, i32 shapeY) {
-    for (i32 i = 0; i < 4; i++) {
-        for (i32 j = 0; j < 4; j++) {
-            i32 row = (3 - j) + shapeY;
-            i32 col = i + shapeX;
-            bool isBoundary = (col >= FIELD_WIDTH || col < 0) || (row < 0);
-            bool fieldVal = isBoundary;
-            if (row < FIELD_HEIGHT) {
-                fieldVal |= (bool)(context->Game->Field[row][col]);
-            }
-            bool collision = (bool)shape.Data[(j * 4) + i] && fieldVal;
-            if (collision) { 
-                return true;
-            }
-        }
-    }
-    return false;
 }
 
 /*
@@ -194,14 +173,6 @@ static bool game_check_collision(Context* context, Shape shape, i32 shapeX, i32 
 static bool game_check_lose(Context* context) {
 
     return false;
-}
-
-static void game_zero_field(Context* context) {
-    for (i32 j = 0; j < FIELD_HEIGHT; j++) {
-        for (i32 i = 0; i < FIELD_WIDTH; i++) {
-            context->Game->Field[j][i] = 0;
-        }
-    }
 }
 
 static void game_clear_lines(Context* context) {
@@ -239,7 +210,7 @@ static void game_start_play(Context* context) {
     context->Game->NextShape = s_Shapes[RandU32(1, 7)];
     game_next_shape(context, RandU32(1, 7));
 
-    game_zero_field(context);
+    field_clear(context->Game->Field[0]);
 }
 
 /*
@@ -269,14 +240,14 @@ static void gamestate_playing_update(Context* context) {
     if (input_key_was_pressed_this_frame(context->Inputs->Up)) {
         Shape shape = context->Game->ActiveShape;
         shape_rotate(shape);
-        if (!game_check_collision(context, shape, context->Game->PlayerX, context->Game->PlayerY)) {
+        if (!field_check_collision(context->Game->Field[0], shape, context->Game->PlayerX, context->Game->PlayerY)) {
             shape_rotate(context->Game->ActiveShape);
         }
     }
 
     if (input_key_was_pressed_this_frame(context->Inputs->Right)) {
-        if (!game_check_collision(
-            context, 
+        if (!field_check_collision(
+            context->Game->Field[0], 
             context->Game->ActiveShape, 
             context->Game->PlayerX + 1, 
             context->Game->PlayerY
@@ -285,8 +256,8 @@ static void gamestate_playing_update(Context* context) {
             context->Game->PlayerX ++;
         }
     } else if (context->Inputs->Right.IsRepeat) {
-        if (!game_check_collision(
-            context, 
+        if (!field_check_collision(
+            context->Game->Field[0], 
             context->Game->ActiveShape, 
             context->Game->PlayerX + 1, 
             context->Game->PlayerY
@@ -297,8 +268,8 @@ static void gamestate_playing_update(Context* context) {
     }
 
     if (input_key_was_pressed_this_frame(context->Inputs->Left)) {
-        if (!game_check_collision(
-            context, 
+        if (!field_check_collision(
+            context->Game->Field[0], 
             context->Game->ActiveShape, 
             context->Game->PlayerX - 1, 
             context->Game->PlayerY
@@ -307,8 +278,8 @@ static void gamestate_playing_update(Context* context) {
             context->Game->PlayerX --;
         }
     } else if (context->Inputs->Left.IsRepeat) {
-        if (!game_check_collision(
-            context, 
+        if (!field_check_collision(
+            context->Game->Field[0], 
             context->Game->ActiveShape, 
             context->Game->PlayerX - 1, 
             context->Game->PlayerY
@@ -321,8 +292,8 @@ static void gamestate_playing_update(Context* context) {
     context->Game->TimeToMoveDown = input_key_was_held_this_frame(context->Inputs->Down) ? 0.1 : 0.8;
 
     if (input_key_was_pressed_this_frame(context->Inputs->Down)) {
-        if (!game_check_collision(
-            context, 
+        if (!field_check_collision(
+            context->Game->Field[0], 
             context->Game->ActiveShape, 
             context->Game->PlayerX, 
             context->Game->PlayerY - 1
@@ -343,8 +314,8 @@ static void gamestate_playing_update(Context* context) {
 
     if (input_key_was_pressed_this_frame(context->Inputs->Space)) {
         i32 dy = 1;
-        while(!game_check_collision(
-            context, 
+        while(!field_check_collision(
+            context->Game->Field[0], 
             context->Game->ActiveShape, 
             context->Game->PlayerX, 
             context->Game->PlayerY - dy
@@ -370,8 +341,8 @@ static void gamestate_playing_update(Context* context) {
     }
 
     if (context->Game->ElapsedSinceLastMoveDown > context->Game->TimeToMoveDown) {
-        if (!game_check_collision(
-            context, 
+        if (!field_check_collision(
+            context->Game->Field[0], 
             context->Game->ActiveShape, 
             context->Game->PlayerX, 
             context->Game->PlayerY - 1
