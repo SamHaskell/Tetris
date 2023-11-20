@@ -510,6 +510,7 @@ static void gamestate_playing_update(Context* context) {
             context->Game->PlayerX,
             context->Game->PlayerY
         );
+            context->AudioEngine.play(context->Game->KickSFX);
         game_next_shape(context, RandU32(1, 7));
 
         context->Game->ElapsedSinceLastMoveDown = 0.0;
@@ -536,6 +537,7 @@ static void gamestate_playing_update(Context* context) {
                 context->Game->PlayerX,
                 context->Game->PlayerY
             );
+            context->AudioEngine.play(context->Game->KickSFX);
             game_next_shape(context, RandU32(1, 7));
         }
 
@@ -570,6 +572,9 @@ void game_init(Context* context) {
     context->Game->BGM.load("audio/realm.mp3");
     context->Game->BGM.setLooping(1);
     context->AudioEngine.play(context->Game->BGM);
+
+    context->Game->KickSFX.load("audio/click2.wav");
+    context->Game->KickSFX.setLooping(0);
 
     context->Game->DeltaTime = 1.0/60.0;
     context->MainClock->Tick();

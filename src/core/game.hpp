@@ -42,6 +42,7 @@ struct Game {
     f64 LockDelay = 0.5;
     GameState GameState;
     SoLoud::Wav BGM;
+    SoLoud::Wav KickSFX;
 };
 
 void game_init(Context* context);
