@@ -105,48 +105,49 @@ static Shape s_Shapes[8] = {
     Rendering.
 */
 
-static void game_render_field(Context* context, i32 left, i32 bottom) {
+static void game_render_field(Context* context, i32 left, i32 top) {
     // Draw the walls.
     for (i32 j = 0; j < FIELD_HEIGHT; j++) {
-        Rect2D rectLeft = Rect2D(left, bottom + (j * 32), 32, 32);
-        Rect2D rectRight = Rect2D(left + (FIELD_WIDTH + 1) * 32, bottom + (j * 32), 32, 32);
+        Rect2D rectLeft = Rect2D(left, top + (j * 32), 32, 32);
+        Rect2D rectRight = Rect2D(left + (FIELD_WIDTH + 1) * 32, top + (j * 32), 32, 32);
         Vec4 color = {0.3, 0.3, 0.3, 1.0};
-        draw_quad_filled(context, color, rectLeft);
-        draw_quad_filled(context, color, rectRight);
-        draw_quad_outline(context, {0.0, 0.0, 0.0, 1.0}, rectLeft);
-        draw_quad_outline(context, {0.0, 0.0, 0.0, 1.0}, rectRight);
+        draw_quad_filled(context->Renderer, color, rectLeft);
+        draw_quad_filled(context->Renderer, color, rectRight);
+        draw_quad_outline(context->Renderer, {0.0, 0.0, 0.0, 1.0}, rectLeft);
+        draw_quad_outline(context->Renderer, {0.0, 0.0, 0.0, 1.0}, rectRight);
     }
 
     // Draw the cells of the field.
     for (i32 j = 0; j < FIELD_HEIGHT; j++) {
         for (i32 i = 1; i <= FIELD_WIDTH; i++) {
             u32 cell = context->Game->Field[j][i - 1];
-            Rect2D rect = Rect2D(left + (i * 32), bottom + (j * 32), 32, 32);
+            Rect2D rect = Rect2D(left + (i * 32), top + ((FIELD_HEIGHT - j - 1) * 32), 32, 32);
             Vec4 color = s_Shapes[cell].Color;
-            draw_quad_filled(context, color, rect);
+            draw_quad_filled(context->Renderer, color, rect);
             if (cell) {
-                draw_quad_outline(context, {0.0, 0.0, 0.0, 1.0}, rect);
+                draw_quad_outline(context->Renderer, {0.0, 0.0, 0.0, 1.0}, rect);
             }
         }
     }
 
     // Draw the players active shape.
     f32 offsetX = (f32)((context->Game->PlayerX + 1) * 32);
-    f32 offsetY = (f32)(context->Game->PlayerY * 32);
-    shape_render(context, context->Game->ActiveShape, offsetX, offsetY);
+    f32 offsetY = (f32)((FIELD_HEIGHT - context->Game->PlayerY - 4) * 32);
+    CX_DEBUG("%i", context->Game->PlayerY);
+    shape_render(context->Renderer, context->Game->ActiveShape, offsetX, offsetY);
 }
 
-static void game_render_shape_preview(Context* context, i32 left, i32 bottom) {
-    draw_quad_filled(context, s_Shapes[0].Color, {(f32)left, (f32)bottom, 128.0, 128.0});
-    draw_quad_outline(context, {0.0, 0.0, 0.0, 1.0}, {(f32)left, (f32)bottom, 128.0, 128.0});
-    shape_render(context, context->Game->NextShape, (f32)left, (f32)bottom);
+static void game_render_shape_preview(Context* context, i32 left, i32 top) {
+    draw_quad_filled(context->Renderer, s_Shapes[0].Color, {(f32)left, (f32)top, 128.0, 128.0});
+    draw_quad_outline(context->Renderer, {0.0, 0.0, 0.0, 1.0}, {(f32)left, (f32)top, 128.0, 128.0});
+    shape_render(context->Renderer, context->Game->NextShape, (f32)left, (f32)top);
     draw_text_centered(
-        context, 
+        context->Renderer, 
         context->Game->MainFontMedium,
         "next",
         {1.0, 1.0, 1.0, 1.0},
         left + 64,
-        bottom - 24
+        top + 128 + 24
     );
 }
 
@@ -178,7 +179,6 @@ static bool game_check_lose(Context* context) {
 static void game_clear_lines(Context* context) {
     u32 lineCount = field_clear_lines(context->Game->Field[0]);
     context->Game->TimeToMoveDown *= pow(0.98, lineCount);
-    CX_INFO("%lf", context->Game->TimeToMoveDown);
 }
 
 /*
@@ -407,16 +407,16 @@ void game_update_and_render(Context* context, f64 dt) {
     game_render_shape_preview(context, 480, 224);
 
     draw_text_centered(
-        context,
+        context->Renderer,
         context->Game->MainFontLarge,
         "tetris!",
         {1.0, 1.0, 1.0, 1.0},
-        544, 544
+        544, 32
     );
 
     if (context->Game->GameState != GameState::Playing) {
         draw_quad_filled(
-            context,
+            context->Renderer,
             {0.1, 0.1, 0.2, 0.6},
             {
                 0, 0, (f32)context->WindowWidth, (f32)context->WindowHeight
@@ -426,7 +426,7 @@ void game_update_and_render(Context* context, f64 dt) {
 
     if (context->Game->GameState == GameState::Start) {
         draw_text_centered(
-            context,
+            context->Renderer,
             context->Game->MainFontLarge,
             "press space to begin",
             {1.0, 1.0, 1.0, 1.0},
@@ -437,31 +437,31 @@ void game_update_and_render(Context* context, f64 dt) {
 
     if (context->Game->GameState == GameState::Paused) {
         draw_text_centered(
-            context,
+            context->Renderer,
             context->Game->MainFontLarge,
             "paused",
             {1.0, 1.0, 1.0, 1.0},
-            192, 544
+            192, 32
         );
     }
 
     if (context->Game->GameState == GameState::GameOver) {
         draw_text_centered(
-            context,
+            context->Renderer,
             context->Game->MainFontLarge,
             "game over",
             {1.0, 1.0, 1.0, 1.0},
             context->WindowWidth / 2,
-            (context->WindowHeight / 2) + 24
+            (context->WindowHeight / 2) - 24
         );
 
         draw_text_centered(
-            context,
+            context->Renderer,
             context->Game->MainFontMedium,
             "press space to play again",
             {1.0, 1.0, 1.0, 1.0},
             context->WindowWidth / 2,
-            (context->WindowHeight / 2) - 24
+            (context->WindowHeight / 2) + 24
         );
     }
 

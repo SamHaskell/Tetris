@@ -40,16 +40,16 @@ void platform_quit(Context* context);
 void platform_main_loop(void* memory);
 
 void platform_process_events(Context* context);
-void platform_swap_buffers(Context* context);
+void platform_swap_buffers(SDL_Renderer* renderer);
 
 /*
     Basic platform rendering API
 */
 
-void draw_quad_filled(Context* context, Vec4 color, Rect2D rect);
-void draw_quad_outline(Context* context, Vec4 color, Rect2D rect);
-void draw_text(Context* context, TTF_Font* font, const char* text, Vec4 color, i32 left, i32 bottom);
-void draw_text_centered(Context* context, TTF_Font* font, const char* text, Vec4 color, i32 centerX, i32 centerY);
+void draw_quad_filled(SDL_Renderer* renderer, Vec4 color, Rect2D rect);
+void draw_quad_outline(SDL_Renderer* renderer, Vec4 color, Rect2D rect);
+void draw_text(SDL_Renderer* renderer, TTF_Font* font, const char* text, Vec4 color, i32 left, i32 bottom);
+void draw_text_centered(SDL_Renderer* renderer, TTF_Font* font, const char* text, Vec4 color, i32 centerX, i32 centerY);
 
 /*
     TODO: Add some sort of platform Audio API to pull direct soloud calls out of game layer.

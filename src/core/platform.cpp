@@ -3,6 +3,15 @@
 
 #include "maths/random.hpp"
 
+static SDL_Color color_from_vec4(Vec4 color) {
+    return {
+        (u8)(color.x * 255.0),
+        (u8)(color.y * 255.0),
+        (u8)(color.z * 255.0),
+        (u8)(color.w * 255.0)
+    };
+}
+
 Context* platform_init() {
     Context* context = new Context();
 
@@ -102,7 +111,7 @@ void platform_main_loop(void* memory) {
     platform_process_events(context);
     game_update_and_render(context, dt);
 
-    platform_swap_buffers(context);
+    platform_swap_buffers(context->Renderer);
 }
 
 void platform_process_events(Context* context) {
@@ -200,43 +209,28 @@ void platform_process_events(Context* context) {
     Swaps buffers and clears the new backbuffer to magenta.
 */
 
-void platform_swap_buffers(Context* context) {
-    SDL_RenderPresent(context->Renderer);
-    SDL_SetRenderDrawColor(context->Renderer, 255, 0, 255, 255);
-    SDL_RenderClear(context->Renderer);
+void platform_swap_buffers(SDL_Renderer* renderer) {
+    SDL_RenderPresent(renderer);
+    SDL_SetRenderDrawColor(renderer, 255, 0, 255, 255);
+    SDL_RenderClear(renderer);
 }
 
-void draw_quad_filled(Context* context, Vec4 color, Rect2D rect) {
-    SDL_SetRenderDrawColor(
-        context->Renderer,
-        (i32)(color.x * 255.0f),
-        (i32)(color.y * 255.0f),
-        (i32)(color.z * 255.0f),
-        (i32)(color.w * 255.0f)
-    );
-    SDL_Rect drawRect = { (i32)rect.x, context->WindowHeight - (i32)(rect.y + rect.h), (i32)rect.w, (i32)rect.h };
-    SDL_RenderFillRect(context->Renderer, &drawRect);
+void draw_quad_filled(SDL_Renderer* renderer, Vec4 color, Rect2D rect) {
+    SDL_Color col = color_from_vec4(color);
+    SDL_SetRenderDrawColor(renderer, col.r, col.g, col.b, col.a);
+    SDL_Rect drawRect = { (i32)rect.x, (i32)rect.y, (i32)rect.w, (i32)rect.h };
+    SDL_RenderFillRect(renderer, &drawRect);
 }
 
-void draw_quad_outline(Context* context, Vec4 color, Rect2D rect) {
-    SDL_SetRenderDrawColor(
-        context->Renderer,
-        (i32)(color.x * 255.0f),
-        (i32)(color.y * 255.0f),
-        (i32)(color.z * 255.0f),
-        (i32)(color.w * 255.0f)
-    );
-    SDL_Rect drawRect = { (i32)rect.x, context->WindowHeight - (i32)(rect.y + rect.h), (i32)rect.w, (i32)rect.h };
-    SDL_RenderDrawRect(context->Renderer, &drawRect);
+void draw_quad_outline(SDL_Renderer* renderer, Vec4 color, Rect2D rect) {
+    SDL_Color col = color_from_vec4(color);
+    SDL_SetRenderDrawColor(renderer, col.r, col.g, col.b, col.a);
+    SDL_Rect drawRect = { (i32)rect.x, (i32)rect.y, (i32)rect.w, (i32)rect.h };
+    SDL_RenderDrawRect(renderer, &drawRect);
 }
 
-void draw_text(Context* context, TTF_Font* font, const char* text, Vec4 color, i32 left, i32 bottom) {
-    SDL_Color textColor = {
-        (u8)(color.x * 255.0),
-        (u8)(color.y * 255.0),
-        (u8)(color.z * 255.0),
-        (u8)(color.w * 255.0), 
-    };
+void draw_text(SDL_Renderer* renderer, TTF_Font* font, const char* text, Vec4 color, i32 left, i32 top) {
+    SDL_Color textColor = color_from_vec4(color);
 
     SDL_Surface* surface = TTF_RenderText_Blended(
         font,
@@ -245,7 +239,7 @@ void draw_text(Context* context, TTF_Font* font, const char* text, Vec4 color, i
     );
 
     SDL_Texture* tex = SDL_CreateTextureFromSurface(
-        context->Renderer,
+        renderer,
         surface
     );
 
@@ -258,23 +252,18 @@ void draw_text(Context* context, TTF_Font* font, const char* text, Vec4 color, i
 
     SDL_Rect dst = {
         left,
-        context->WindowHeight - bottom + textHeight,
+        top,
         textWidth,
         textHeight
     };
 
-    SDL_RenderCopy(context->Renderer, tex, NULL, &dst);
+    SDL_RenderCopy(renderer, tex, NULL, &dst);
 
     SDL_DestroyTexture(tex);
 }
 
-void draw_text_centered(Context* context, TTF_Font* font, const char* text, Vec4 color, i32 centerX, i32 centerY) {
-    SDL_Color textColor = {
-        (u8)(color.x * 255.0),
-        (u8)(color.y * 255.0),
-        (u8)(color.z * 255.0),
-        (u8)(color.w * 255.0), 
-    };
+void draw_text_centered(SDL_Renderer* renderer, TTF_Font* font, const char* text, Vec4 color, i32 centerX, i32 centerY) {
+    SDL_Color textColor = color_from_vec4(color);
 
     SDL_Surface* surface = TTF_RenderText_Blended(
         font,
@@ -283,7 +272,7 @@ void draw_text_centered(Context* context, TTF_Font* font, const char* text, Vec4
     );
 
     SDL_Texture* tex = SDL_CreateTextureFromSurface(
-        context->Renderer,
+        renderer,
         surface
     );
 
@@ -296,12 +285,12 @@ void draw_text_centered(Context* context, TTF_Font* font, const char* text, Vec4
 
     SDL_Rect dst = {
         centerX - (textWidth / 2),
-        context->WindowHeight - (centerY + (textHeight / 2)),
+        centerY + (textHeight / 2),
         textWidth,
         textHeight
     };
 
-    SDL_RenderCopy(context->Renderer, tex, NULL, &dst);
+    SDL_RenderCopy(renderer, tex, NULL, &dst);
 
     SDL_DestroyTexture(tex);
 }
