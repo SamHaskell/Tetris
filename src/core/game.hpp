@@ -3,6 +3,8 @@
 #include "core/base.h"
 #include "core/shape.hpp"
 
+#include "soloud_wav.h"
+
 struct Context;
 
 #define FIELD_WIDTH 10
@@ -36,7 +38,10 @@ struct Game {
     f64 ElapsedGameTime = 0.0;
     f64 ElapsedSinceLastMoveDown = 0.0;
     f64 TimeToMoveDown = 0.8;
+    f64 LockTime = 0.0;
+    f64 LockDelay = 0.5;
     GameState GameState;
+    SoLoud::Wav BGM;
 };
 
 void game_init(Context* context);

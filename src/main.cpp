@@ -23,6 +23,8 @@ int main(int argc, char* argv[]) {
 
     SDL_SetRenderDrawBlendMode(context->Renderer, SDL_BLENDMODE_BLEND);
 
+    context->AudioEngine.init();
+
     ok = TTF_Init();
     CX_ASSERT(ok == 0, "TTF failed to initialise.");
 

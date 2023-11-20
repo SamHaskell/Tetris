@@ -112,6 +112,8 @@ static void game_swap_buffers(Context* context) {
 }
 
 static void game_swap_shapes(Context* context) {
+    context->Game->PlayerX = 3;
+    context->Game->PlayerY = 16;
     Shape temp = context->Game->ActiveShape;
     context->Game->ActiveShape = context->Game->NextShape;
     context->Game->NextShape = temp;
@@ -310,7 +312,7 @@ static bool field_check_line(u32* field, u32 row) {
 
 static void game_next_shape(Context* context, u32 ID) {
     context->Game->PlayerX = 3;
-    context->Game->PlayerY = 14;
+    context->Game->PlayerY = 16;
     context->Game->ActiveShape = context->Game->NextShape;
     context->Game->NextShape = s_Shapes[ID];
     context->Game->CanSwap = true;
@@ -332,6 +334,19 @@ static bool game_check_collision(Context* context, Shape shape, i32 shapeX, i32 
             }
         }
     }
+    return false;
+}
+
+/*
+    Following GameBoy Tetris rules:
+    A loss occurs when a piece locks on its starting position twice in a row.
+    It is possible to move the piece out from existing blocks.
+
+    TODO: Implement lock delay so that this doesn't feel unfair.
+*/
+
+static bool game_check_lose(Context* context) {
+
     return false;
 }
 
@@ -360,7 +375,8 @@ static void game_clear_lines(Context* context) {
         }
     }
 
-    context->Game->TimeToMoveDown *= pow(0.96, lineCount);
+    context->Game->TimeToMoveDown *= pow(0.98, lineCount);
+    CX_INFO("%lf", context->Game->TimeToMoveDown);
 }
 
 /*
@@ -369,12 +385,15 @@ static void game_clear_lines(Context* context) {
 
 static void game_start_play(Context* context) {
     context->Game->CanSwap = true;
-    context->Game->NextShape = s_Shapes[RandU32(1, 7)];
     context->Game->GameState = GameState::Playing;
-    game_next_shape(context, RandU32(1, 7));
     context->Game->ElapsedGameTime = 0.0;
     context->Game->ElapsedSinceLastMoveDown = 0.0;
     context->Game->TimeToMoveDown = 0.5;
+
+    context->Game->NextShape = s_Shapes[RandU32(1, 7)];
+    game_next_shape(context, RandU32(1, 7));
+
+    game_zero_field(context);
 }
 
 /*
@@ -388,6 +407,12 @@ static void gamestate_start_update(Context* context) {
 }
 
 static void gamestate_playing_update(Context* context) {
+    
+    // Check for a gameover.
+    if (game_check_lose(context)) {
+        context->Game->GameState = GameState::GameOver;
+    }
+
     if (input_key_was_pressed_this_frame(context->Inputs->Swap) && context->Game->CanSwap) {
         game_swap_shapes(context);
         context->Game->CanSwap = false;
@@ -445,6 +470,8 @@ static void gamestate_playing_update(Context* context) {
         }
     }
 
+    context->Game->TimeToMoveDown = (context->Inputs->Down.IsDown && (context->Inputs->Down.TransitionCount == 0)) ? 0.1 : 0.8;
+
     if (input_key_was_pressed_this_frame(context->Inputs->Down)) {
         if (!game_check_collision(
             context, 
@@ -463,7 +490,6 @@ static void gamestate_playing_update(Context* context) {
             );
             game_next_shape(context, RandU32(1, 7));
         }
-
         context->Game->ElapsedSinceLastMoveDown = 0.0;
     }
 
@@ -527,7 +553,7 @@ static void gamestate_paused_update(Context* context) {
 
 static void gamestate_gameover_update(Context* context) {
     if (input_key_was_pressed_this_frame(context->Inputs->Space)) {
-        context->Game->GameState = GameState::Playing;
+        game_start_play(context);
     }
 }
 
@@ -540,8 +566,10 @@ void game_init(Context* context) {
 
     context->Game->MainFontSmall = TTF_OpenFont("pico/pico-8.ttf", FONT_SIZE_SMALL);
     CX_ASSERT(context->Game->MainFontSmall != NULL, "Failed to load font!");
-    
-    game_zero_field(context);
+
+    context->Game->BGM.load("audio/realm.mp3");
+    context->Game->BGM.setLooping(1);
+    context->AudioEngine.play(context->Game->BGM);
 
     context->Game->DeltaTime = 1.0/60.0;
     context->MainClock->Tick();
@@ -616,10 +644,19 @@ void game_update_and_render(void* mem) {
         draw_text_centered(
             context,
             context->Game->MainFontLarge,
+            "game over",
+            {1.0, 1.0, 1.0, 1.0},
+            context->WindowWidth / 2,
+            (context->WindowHeight / 2) + 24
+        );
+
+        draw_text_centered(
+            context,
+            context->Game->MainFontMedium,
             "press space to play again",
             {1.0, 1.0, 1.0, 1.0},
             context->WindowWidth / 2,
-            context->WindowHeight / 2
+            (context->WindowHeight / 2) - 24
         );
     }
 

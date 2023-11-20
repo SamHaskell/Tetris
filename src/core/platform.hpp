@@ -5,6 +5,8 @@
 #include "maths/linalg.hpp"
 #include "maths/geometry.hpp"
 
+#include "soloud.h"
+
 #if CORTEX_PLATFORM_WEB
     #include "SDL.h"
     #include "SDL_ttf.h"
@@ -38,6 +40,7 @@ struct Context {
     i32 WindowHeight;
     SDL_Window* WindowHandle;
     SDL_Renderer* Renderer;
+    SoLoud::Soloud  AudioEngine;
     PlayerInputs* Inputs;
     Utils::Clock* MainClock;
     Game* Game;
