@@ -15,3 +15,4 @@ void field_set_cell(u32* field, u32 row, u32 col, u32 value);
 bool field_check_collision(u32* field, Shape shape, i32 shapeX, i32 shapeY);
 void field_place_shape(u32* field, Shape shape, i32 shapeX, i32 shapeY);
 bool field_check_line(u32* field, u32 row);
+u32 field_clear_lines(u32* field);

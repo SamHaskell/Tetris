@@ -176,22 +176,7 @@ static bool game_check_lose(Context* context) {
 }
 
 static void game_clear_lines(Context* context) {
-    u32 lineCount = 0;
-    for (i32 j = FIELD_HEIGHT - 1; j >= 0; j--) {
-        if (field_check_line(context->Game->Field[0], j)) {
-            // Delete the line and move everything down to adjust.
-            // Iterate upwards setting each row to the value of the row above.
-            for (i32 row = j; row < FIELD_HEIGHT - 1; row++) {
-                memcpy(context->Game->Field[row], context->Game->Field[row + 1], sizeof(u32) * FIELD_WIDTH);
-            }
-            // Zero out the top row to simulate pulling an empty row from above.
-            memset(context->Game->Field[FIELD_HEIGHT - 1], 0, sizeof(u32) * FIELD_WIDTH);
-
-            // Increment linecount for scoring.
-            lineCount ++;
-        }
-    }
-
+    u32 lineCount = field_clear_lines(context->Game->Field[0]);
     context->Game->TimeToMoveDown *= pow(0.98, lineCount);
     CX_INFO("%lf", context->Game->TimeToMoveDown);
 }

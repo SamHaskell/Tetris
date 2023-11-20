@@ -51,3 +51,22 @@ bool field_check_line(u32* field, u32 row) {
     }
     return isFull;
 }
+
+u32 field_clear_lines(u32* field) {
+    u32 count = 0;
+    for (i32 j = FIELD_HEIGHT - 1; j >= 0; j--) {
+        if (field_check_line(field, j)) {
+            // Delete the line and move everything down to adjust.
+            // Iterate upwards setting each row to the value of the row above.
+            for (i32 row = j; row < FIELD_HEIGHT - 1; row++) {
+                memcpy(&field[row * FIELD_WIDTH], &field[(row + 1) * FIELD_WIDTH], sizeof(u32) * FIELD_WIDTH);
+            }
+            // Zero out the top row to simulate pulling an empty row from above.
+            memset(&field[(FIELD_HEIGHT - 1) * FIELD_WIDTH], 0, sizeof(u32) * FIELD_WIDTH);
+
+            // Increment linecount for scoring.
+            count ++;
+        }
+    }
+    return count;
+}
