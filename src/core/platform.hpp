@@ -15,7 +15,9 @@
 
 struct KeyState {
     bool IsDown = false;
+    bool IsRepeat = false;
     u32 TransitionCount = 0;
+
 };
 
 struct PlayerInputs {
@@ -25,6 +27,7 @@ struct PlayerInputs {
     KeyState Left;
     KeyState Space;
     KeyState Back;
+    KeyState Swap;
 };
 
 struct Game;
@@ -44,3 +47,4 @@ void draw_quad_filled(Context* context, Vec4 color, Rect2D rect);
 void draw_quad_outline(Context* context, Vec4 color, Rect2D rect);
 
 void draw_text(Context* context, TTF_Font* font, const char* text, Vec4 color, i32 left, i32 bottom);
+void draw_text_centered(Context* context, TTF_Font* font, const char* text, Vec4 color, i32 centerX, i32 centerY);

@@ -11,6 +11,10 @@ struct Context;
 #define FIELD_GET_ROW(i) (i32)(i / FIELD_WIDTH)
 #define FIELD_GET_COL(i) (i32)(i % FIELD_WIDTH)
 
+#define FONT_SIZE_LARGE 36
+#define FONT_SIZE_MEDIUM 24
+#define FONT_SIZE_SMALL 16
+
 enum class GameState {
     Start,
     Paused,
@@ -19,11 +23,15 @@ enum class GameState {
 };
 
 struct Game {
-    TTF_Font* MainFont;
+    TTF_Font* MainFontLarge;
+    TTF_Font* MainFontMedium;
+    TTF_Font* MainFontSmall;
     u32 Field[FIELD_HEIGHT][FIELD_WIDTH];
     i32 PlayerX;
     i32 PlayerY;
     Shape ActiveShape;
+    Shape NextShape;
+    bool CanSwap;
     f64 DeltaTime = 0.0;
     f64 ElapsedGameTime = 0.0;
     f64 ElapsedSinceLastMoveDown = 0.0;

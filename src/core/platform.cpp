@@ -57,7 +57,47 @@ void draw_text(Context* context, TTF_Font* font, const char* text, Vec4 color, i
 
     SDL_Rect dst = {
         left,
-        bottom,
+        context->WindowHeight - bottom,
+        textWidth,
+        textHeight
+    };
+
+    SDL_RenderCopy(context->Renderer, tex, NULL, &dst);
+
+    SDL_DestroyTexture(tex);
+}
+
+void draw_text_centered(Context* context, TTF_Font* font, const char* text, Vec4 color, i32 centerX, i32 centerY) {
+    SDL_Color textColor = {
+        (u8)(color.x * 255.0),
+        (u8)(color.y * 255.0),
+        (u8)(color.z * 255.0),
+        (u8)(color.w * 255.0), 
+    };
+
+    SDL_Surface* surface = TTF_RenderText_Blended(
+        font,
+        text,
+        textColor
+    );
+
+    // PROBLEM
+    SDL_Texture* tex = SDL_CreateTextureFromSurface(
+        context->Renderer,
+        surface
+    );
+    //
+
+    SDL_FreeSurface(surface);
+
+    i32 textWidth;
+    i32 textHeight;
+
+    SDL_QueryTexture(tex, NULL, NULL, &textWidth, &textHeight);
+
+    SDL_Rect dst = {
+        centerX - (textWidth / 2),
+        context->WindowHeight - (centerY - (textHeight / 2)),
         textWidth,
         textHeight
     };

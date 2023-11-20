@@ -19,7 +19,6 @@ void shape_rotate(Shape& shape) {
 */
 
 void shape_render(Context* context, Shape& shape, f32 x, f32 y) {
-    draw_quad_outline(context, {1.0, 0.0, 0.0, 1.0}, {x, y, 128.0, 128.0});
     for (i32 j = 0; j < 4; j++) {
         for (i32 i = 0; i < 4; i++) {
             if (shape.Data[(j * 4) + i]) {
