@@ -47,4 +47,4 @@ struct Game {
 };
 
 void game_init(Context* context);
-void game_update_and_render(Context* context);
+void game_update_and_render(Context* context, f64 dt);

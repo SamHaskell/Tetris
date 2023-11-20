@@ -84,7 +84,8 @@ void platform_shutdown(Context* context) {
 
 void platform_main_loop(void* memory) {
     Context* context = (Context*)memory;
-    game_update_and_render(context);
+    f64 dt = context->MainClock->Tick();
+    game_update_and_render(context, dt);
 }
 
 void draw_quad_filled(Context* context, Vec4 color, Rect2D rect) {

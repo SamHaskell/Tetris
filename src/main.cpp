@@ -17,6 +17,5 @@ int main(int argc, char* argv[]) {
 #endif
 
     platform_shutdown(context);
-
     return 0;
 }

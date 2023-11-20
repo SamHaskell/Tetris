@@ -570,7 +570,7 @@ void game_init(Context* context) {
     context->Game->GameState = GameState::Start;
 }
 
-void game_update_and_render(Context* context) {
+void game_update_and_render(Context* context, f64 dt) {
     game_handle_events(context);
 
     switch (context->Game->GameState) {
@@ -652,7 +652,6 @@ void game_update_and_render(Context* context) {
 
     game_swap_buffers(context);
 
-    context->Game->DeltaTime = context->MainClock->Tick();
-    context->Game->ElapsedGameTime += context->Game->DeltaTime;
-    context->Game->ElapsedSinceLastMoveDown += context->Game->DeltaTime;
+    context->Game->ElapsedGameTime += dt;
+    context->Game->ElapsedSinceLastMoveDown += dt;
 }
