@@ -21,6 +21,8 @@ int main(int argc, char* argv[]) {
     context->Renderer = SDL_CreateRenderer(context->WindowHandle, -1, SDL_RENDERER_PRESENTVSYNC);
     CX_ASSERT(context->Renderer != NULL, "SDL failed to create a valid rendering context.");
 
+    SDL_SetRenderDrawBlendMode(context->Renderer, SDL_BLENDMODE_BLEND);
+
     ok = TTF_Init();
     CX_ASSERT(ok == 0, "TTF failed to initialise.");
 

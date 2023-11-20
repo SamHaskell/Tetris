@@ -35,7 +35,7 @@ struct Game {
     f64 DeltaTime = 0.0;
     f64 ElapsedGameTime = 0.0;
     f64 ElapsedSinceLastMoveDown = 0.0;
-    f64 TimeToMoveDown = 0.5;
+    f64 TimeToMoveDown = 0.8;
     GameState GameState;
 };
 

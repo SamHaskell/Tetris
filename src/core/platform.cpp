@@ -57,7 +57,7 @@ void draw_text(Context* context, TTF_Font* font, const char* text, Vec4 color, i
 
     SDL_Rect dst = {
         left,
-        context->WindowHeight - bottom,
+        context->WindowHeight - bottom + textHeight,
         textWidth,
         textHeight
     };
@@ -97,7 +97,7 @@ void draw_text_centered(Context* context, TTF_Font* font, const char* text, Vec4
 
     SDL_Rect dst = {
         centerX - (textWidth / 2),
-        context->WindowHeight - (centerY - (textHeight / 2)),
+        context->WindowHeight - (centerY + (textHeight / 2)),
         textWidth,
         textHeight
     };

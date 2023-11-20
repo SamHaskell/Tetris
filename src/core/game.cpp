@@ -273,7 +273,7 @@ static void game_render_shape_preview(Context* context, i32 left, i32 bottom) {
         "next",
         {1.0, 1.0, 1.0, 1.0},
         left + 64,
-        bottom
+        bottom - 24
     );
 }
 
@@ -359,6 +359,8 @@ static void game_clear_lines(Context* context) {
             lineCount ++;
         }
     }
+
+    context->Game->TimeToMoveDown *= pow(0.96, lineCount);
 }
 
 /*
@@ -525,7 +527,7 @@ static void gamestate_paused_update(Context* context) {
 
 static void gamestate_gameover_update(Context* context) {
     if (input_key_was_pressed_this_frame(context->Inputs->Space)) {
-        context->Game->GameState = GameState::Start;
+        context->Game->GameState = GameState::Playing;
     }
 }
 
@@ -552,12 +554,6 @@ void game_update_and_render(void* mem) {
     
     game_handle_events(context);
 
-    if (context->Inputs->Space.IsRepeat) {
-        CX_INFO("REPEAT!");
-    } else if (input_key_was_pressed_this_frame(context->Inputs->Space)) {
-        CX_INFO("AWWW");
-    }
-
     switch (context->Game->GameState) {
         case GameState::Start:
             gamestate_start_update(context);
@@ -577,6 +573,35 @@ void game_update_and_render(void* mem) {
     game_render_field(context, 0, 0);
     game_render_shape_preview(context, 480, 224);
 
+    draw_text_centered(
+        context,
+        context->Game->MainFontLarge,
+        "tetris!",
+        {1.0, 1.0, 1.0, 1.0},
+        544, 544
+    );
+
+    if (context->Game->GameState != GameState::Playing) {
+        draw_quad_filled(
+            context,
+            {0.1, 0.1, 0.2, 0.6},
+            {
+                0, 0, (f32)context->WindowWidth, (f32)context->WindowHeight
+            }
+        );
+    }
+
+    if (context->Game->GameState == GameState::Start) {
+        draw_text_centered(
+            context,
+            context->Game->MainFontLarge,
+            "press space to begin",
+            {1.0, 1.0, 1.0, 1.0},
+            context->WindowWidth / 2,
+            context->WindowHeight / 2
+        );
+    }
+
     if (context->Game->GameState == GameState::Paused) {
         draw_text_centered(
             context,
@@ -587,13 +612,16 @@ void game_update_and_render(void* mem) {
         );
     }
 
-    draw_text_centered(
-        context,
-        context->Game->MainFontLarge,
-        "tetris!",
-        {1.0, 1.0, 1.0, 1.0},
-        544, 544
-    );
+    if (context->Game->GameState == GameState::GameOver) {
+        draw_text_centered(
+            context,
+            context->Game->MainFontLarge,
+            "press space to play again",
+            {1.0, 1.0, 1.0, 1.0},
+            context->WindowWidth / 2,
+            context->WindowHeight / 2
+        );
+    }
 
     game_swap_buffers(context);
 
