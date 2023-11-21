@@ -2,7 +2,7 @@
 
 Hi! This is a small Tetris clone that I decided to put together over the course of a couple of weekends. I use SDL and emscripten to target the web, and the game is now live on [itch.io](https://samhaskell.itch.io/tetris) if you fancy giving it a play.
 
-To build for the web, simply clone the repo, cd into the root directory and run:
+To build for the web, you will need [emscripten](https://emscripten.org/). Once you have emscripten set up and ready to go, simply clone the repo, cd into the root directory and run:
 
 ```
 premake5 gmake 
