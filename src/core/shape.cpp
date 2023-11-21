@@ -18,20 +18,14 @@ void shape_rotate(Shape& shape) {
     Draws the 128 x 128 shape, where (x, y) is the bottom-left corner
 */
 
-void shape_render(SDL_Renderer* renderer, Shape& shape, i32 x, i32 y) {
+void shape_render(Context* context, Shape& shape, f32 x, f32 y) {
     for (i32 j = 0; j < 4; j++) {
         for (i32 i = 0; i < 4; i++) {
             if (shape.Data[(j * 4) + i]) {
-                Rect2D rect = {(f32)(x + i * 32), (f32)(y + j * 32), (f32)32, (f32)32};
-                draw_quad_filled(renderer, shape.Color, rect);
-                draw_quad_outline(renderer, {0.0, 0.0, 0.0, 0.4}, rect);
+                Rect2D rect = {x + (f32)(i * 32), y + (f32)(96 - (j * 32)), 32, 32};
+                draw_quad_filled(context, shape.Color, rect);
+                draw_quad_outline(context, {0.0, 0.0, 0.0, 1.0}, rect);
             }
         }
     }
-}
-
-void shape_swap(Shape& a, Shape& b) {
-    Shape temp = a;
-    a = b;
-    b = temp;
 }
