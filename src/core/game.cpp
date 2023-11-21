@@ -2,17 +2,6 @@
 #include "core/platform.hpp"
 #include "maths/random.hpp"
 
-static Vec4 s_Colors[8] = {
-    COLOR_BACKGROUND,
-    {0.000, 0.378, 0.576, 1.0},
-    {0.004, 0.761, 0.706, 1.0},
-    {0.957, 0.612, 0.184, 1.0},
-    {0.914, 0.339, 0.227, 1.0},
-    {0.792, 0.055, 0.347, 1.0},
-    {0.812, 0.153, 0.890, 1.0},
-    {0.298, 0.886, 0.414, 1.0},
-};
-
 static Shape s_Shapes[8] = {
     {
         .Data = {
@@ -21,7 +10,9 @@ static Shape s_Shapes[8] = {
             0, 0, 0, 0,
             0, 0, 0, 0
         },
-        .Color = s_Colors[0],
+        .Color = {
+            0.14, 0.14, 0.18, 1.0
+        },
         .ID = 0,        
     },
     {
@@ -31,7 +22,9 @@ static Shape s_Shapes[8] = {
             0, 0, 0, 0,
             0, 0, 0, 0
         },
-        .Color = s_Colors[1],
+        .Color = {
+            0.996, 0.004, 0.0, 1.0
+        },
         .ID = 1,
     },
     {
@@ -41,7 +34,9 @@ static Shape s_Shapes[8] = {
             0, 1, 1, 0,
             0, 0, 0, 0
         },
-        .Color = s_Colors[2],
+        .Color = {
+            0.992, 0.6, 0.796, 1.0
+        },
         .ID = 2,
     },
     {
@@ -51,7 +46,9 @@ static Shape s_Shapes[8] = {
             0, 1, 1, 1,
             0, 0, 0, 0
         },
-        .Color = s_Colors[3],
+        .Color = {
+            1.0, 0.396, 0.012, 1.0
+        },
         .ID = 3,
     },
     {
@@ -61,7 +58,9 @@ static Shape s_Shapes[8] = {
             0, 1, 0, 0,
             0, 0, 0, 0
         },
-        .Color = s_Colors[4],
+        .Color = {
+            1.0, 1.0, 0.0, 1.0
+        },
         .ID = 4,
     },
     {
@@ -71,7 +70,9 @@ static Shape s_Shapes[8] = {
             0, 1, 1, 1,
             0, 0, 0, 0
         },
-        .Color = s_Colors[5],
+        .Color = {
+            0.0, 0.0, 0.996, 1.0
+        },
         .ID = 5,
     },
     {
@@ -81,7 +82,9 @@ static Shape s_Shapes[8] = {
             0, 1, 1, 0,
             0, 0, 0, 0
         },
-        .Color = s_Colors[6],
+        .Color = {
+            0.0, 0.502, 0.004, 1.0
+        },
         .ID = 6,
     },
     {
@@ -91,294 +94,429 @@ static Shape s_Shapes[8] = {
             0, 0, 1, 1,
             0, 0, 0, 0
         },
-        .Color = s_Colors[7],
+        .Color = {
+            0.506, 0.004, 0.498, 1.0
+        },
         .ID = 7,
     },
 };
 
 /*
-    Rendering procedures
+    Miscellaneous functions, platform actions etc.
 */
 
-static void game_render_background(Context* context) {
-    draw_quad_filled(
-        context->Renderer,
-        COLOR_BACKGROUND,
-        {0, 0, (f32)context->WindowWidth, (f32)context->WindowHeight}
-    );
+static void game_swap_buffers(Context* context) {
+    SDL_RenderPresent(context->Renderer);
+    SDL_SetRenderDrawColor(context->Renderer, 20, 20, 20, 20);
+    SDL_RenderClear(context->Renderer);
 }
 
-static void game_render_decorations(Context* context) {
-
+static void game_swap_shapes(Context* context) {
+    Shape temp = context->Game->ActiveShape;
+    context->Game->ActiveShape = context->Game->NextShape;
+    context->Game->NextShape = temp;
 }
 
-static void game_render_field(Context* context, i32 left, i32 top) {
+static void game_quit(Context* context) {
+    #if CORTEX_PLATFORM_WEB
+        emscripten_cancel_main_loop();
+    #else
+        context->IsRunning = false;
+    #endif
+}
+
+static void input_set_keystate(KeyState& keystate, bool isDown, bool isRepeat) {
+    if (isDown != keystate.IsDown) {
+        keystate.TransitionCount ++;
+    }
+    keystate.IsDown = isDown;
+    keystate.IsRepeat = isRepeat;
+}
+
+static bool input_key_was_pressed_this_frame(KeyState& KeyState) {
+    return (KeyState.IsDown && (KeyState.TransitionCount > 0));
+}
+
+static void game_handle_events(Context* context) {
+    context->Inputs->Left.TransitionCount = 0;
+    context->Inputs->Right.TransitionCount = 0;
+    context->Inputs->Up.TransitionCount = 0;
+    context->Inputs->Down.TransitionCount = 0;
+    context->Inputs->Space.TransitionCount = 0;
+    context->Inputs->Back.TransitionCount = 0;
+
+    SDL_Event e;
+    while (SDL_PollEvent(&e)) {
+        switch (e.type) {
+            case SDL_QUIT:
+                game_quit(context);
+            case SDL_KEYDOWN:
+                switch (e.key.keysym.sym) {
+                    case SDLK_a:
+                        input_set_keystate(context->Inputs->Left, true, (e.key.repeat != 0));
+                        break;
+                    case SDLK_d:
+                        input_set_keystate(context->Inputs->Right, true, (e.key.repeat != 0));
+                        break;
+                    case SDLK_s:
+                        input_set_keystate(context->Inputs->Down, true, (e.key.repeat != 0));
+                        break;
+                    case SDLK_w:
+                        input_set_keystate(context->Inputs->Up, true, (e.key.repeat != 0));
+                        break;
+                    case SDLK_LEFT:
+                        input_set_keystate(context->Inputs->Left, true, (e.key.repeat != 0));
+                        break;
+                    case SDLK_RIGHT:
+                        input_set_keystate(context->Inputs->Right, true, (e.key.repeat != 0));
+                        break;
+                    case SDLK_DOWN:
+                        input_set_keystate(context->Inputs->Down, true, (e.key.repeat != 0));
+                        break;
+                    case SDLK_UP:
+                        input_set_keystate(context->Inputs->Up, true, (e.key.repeat != 0));
+                        break;
+                    case SDLK_SPACE:
+                        input_set_keystate(context->Inputs->Space, true, (e.key.repeat != 0));
+                        break;
+                    case SDLK_ESCAPE:
+                        input_set_keystate(context->Inputs->Back, true, (e.key.repeat != 0));
+                        break;
+                    case SDLK_e:
+                        input_set_keystate(context->Inputs->Swap, true, (e.key.repeat != 0));
+                        break;
+                }
+                break;
+            case SDL_KEYUP:
+                switch (e.key.keysym.sym) {
+                    case SDLK_a:
+                        input_set_keystate(context->Inputs->Left, false, (e.key.repeat != 0));
+                        break;
+                    case SDLK_d:
+                        input_set_keystate(context->Inputs->Right, false, (e.key.repeat != 0));
+                        break;
+                    case SDLK_s:
+                        input_set_keystate(context->Inputs->Down, false, (e.key.repeat != 0));
+                        break;
+                    case SDLK_w:
+                        input_set_keystate(context->Inputs->Up, false, (e.key.repeat != 0));
+                        break;
+                    case SDLK_LEFT:
+                        input_set_keystate(context->Inputs->Left, false, (e.key.repeat != 0));
+                        break;
+                    case SDLK_RIGHT:
+                        input_set_keystate(context->Inputs->Right, false, (e.key.repeat != 0));
+                        break;
+                    case SDLK_DOWN:
+                        input_set_keystate(context->Inputs->Down, false, (e.key.repeat != 0));
+                        break;
+                    case SDLK_UP:
+                        input_set_keystate(context->Inputs->Up, false, (e.key.repeat != 0));
+                        break;
+                    case SDLK_SPACE:
+                        input_set_keystate(context->Inputs->Space, false, (e.key.repeat != 0));
+                        break;
+                    case SDLK_ESCAPE:
+                        input_set_keystate(context->Inputs->Back, false, (e.key.repeat != 0));
+                        break;
+                    case SDLK_e:
+                        input_set_keystate(context->Inputs->Swap, false, (e.key.repeat != 0));
+                        break;
+                }
+                break;
+        }
+    }
+}
+
+/*
+    Rendering.
+*/
+
+static void game_render_field(Context* context, i32 left, i32 bottom) {
     // Draw the walls.
     for (i32 j = 0; j < FIELD_HEIGHT; j++) {
-        Rect2D rectLeft = Rect2D(left, top + (j * 32), 32, 32);
-        Rect2D rectRight = Rect2D(left + (FIELD_WIDTH + 1) * 32, top + (j * 32), 32, 32);
-        draw_quad_filled(context->Renderer, COLOR_WALLS, rectLeft);
-        draw_quad_filled(context->Renderer, COLOR_WALLS, rectRight);
-        draw_quad_outline(context->Renderer, {0.0, 0.0, 0.0, 0.4}, rectLeft);
-        draw_quad_outline(context->Renderer, {0.0, 0.0, 0.0, 0.4}, rectRight);
+        Rect2D rectLeft = Rect2D(left, bottom + (j * 32), 32, 32);
+        Rect2D rectRight = Rect2D(left + (FIELD_WIDTH + 1) * 32, bottom + (j * 32), 32, 32);
+        Vec4 color = {0.3, 0.3, 0.3, 1.0};
+        draw_quad_filled(context, color, rectLeft);
+        draw_quad_filled(context, color, rectRight);
+        draw_quad_outline(context, {0.0, 0.0, 0.0, 1.0}, rectLeft);
+        draw_quad_outline(context, {0.0, 0.0, 0.0, 1.0}, rectRight);
     }
 
     // Draw the cells of the field.
     for (i32 j = 0; j < FIELD_HEIGHT; j++) {
         for (i32 i = 1; i <= FIELD_WIDTH; i++) {
-            u32 cell = context->Game->Field[j * FIELD_WIDTH + i - 1];
-            Rect2D rect = Rect2D(left + (i * 32), top + ((FIELD_HEIGHT - j - 1) * 32), 32, 32);
+            u32 cell = context->Game->Field[j][i - 1];
+            Rect2D rect = Rect2D(left + (i * 32), bottom + (j * 32), 32, 32);
             Vec4 color = s_Shapes[cell].Color;
-            draw_quad_filled(context->Renderer, color, rect);
+            draw_quad_filled(context, color, rect);
             if (cell) {
-                draw_quad_outline(context->Renderer, {0.0, 0.0, 0.0, 0.4}, rect);
+                draw_quad_outline(context, {0.0, 0.0, 0.0, 1.0}, rect);
             }
-            draw_quad_filled(context->Renderer, {1.0, 1.0, 1.0, 0.1}, rect);
         }
     }
 
     // Draw the players active shape.
     f32 offsetX = (f32)((context->Game->PlayerX + 1) * 32);
-    f32 offsetY = (f32)((FIELD_HEIGHT - context->Game->PlayerY - 4) * 32);
-    shape_render(context->Renderer, context->Game->CurrentShape, offsetX, offsetY);
+    f32 offsetY = (f32)(context->Game->PlayerY * 32);
+    shape_render(context, context->Game->ActiveShape, offsetX, offsetY);
 }
 
-static void game_render_score(Context* context, i32 left, i32 top) {
-    // TODO: Render the score counter / statistics.
-}
-
-static void game_render_shape_preview(Context* context, i32 left, i32 top) {
-    draw_quad_filled(context->Renderer, COLOR_ACCENT, {(f32)left - 16, (f32)top - 16, 160.0, 160.0});
-    draw_quad_filled(context->Renderer, COLOR_BACKGROUND, {(f32)left - 12, (f32)top - 12, 152.0, 152.0});
-    draw_quad_outline(context->Renderer, {0.0, 0.0, 0.0, 0.4}, {(f32)left - 16, (f32)top - 16, 160.0, 160.0});
-    draw_quad_outline(context->Renderer, {0.0, 0.0, 0.0, 0.4}, {(f32)left - 12, (f32)top - 12, 152.0, 152.0});
-    shape_render(context->Renderer, context->Game->NextShape, (f32)left, (f32)top);
+static void game_render_shape_preview(Context* context, i32 left, i32 bottom) {
+    draw_quad_filled(context, s_Shapes[0].Color, {(f32)left, (f32)bottom, 128.0, 128.0});
+    draw_quad_outline(context, {0.0, 0.0, 0.0, 1.0}, {(f32)left, (f32)bottom, 128.0, 128.0});
+    shape_render(context, context->Game->NextShape, (f32)left, (f32)bottom);
     draw_text_centered(
-        context->Renderer, 
+        context, 
         context->Game->MainFontMedium,
         "next",
-        COLOR_TEXT_DARK,
+        {1.0, 1.0, 1.0, 1.0},
         left + 64,
-        top + 160 + 24
+        bottom - 24
     );
 }
 
 /*
-    Following GameBoy Tetris rules:
-    A loss occurs when a piece locks on its starting position twice in a row
-    It is possible to move the piece out from existing blocks
-
-    TODO: Implement lock delay so that this doesn't feel unfair
+    Logic helpers.
 */
 
-static bool game_check_lose(Context* context) {
-
-    return false;
+static void field_set_cell(u32* field, u32 row, u32 col, u32 value) {
+    field[(row * FIELD_WIDTH) + col] = value;
 }
 
-static void game_clear_lines(Context* context) {
-    u32 lineCount = field_clear_lines(context->Game->Field);
-    context->Game->TimeToMoveDown *= pow(0.97, lineCount);
+static void field_place_shape(u32* field, Shape shape, i32 shapeX, i32 shapeY) {
+    for (i32 i = 0; i < 4; i++) {
+        for (i32 j = 0; j < 4; j++) { 
+            i32 row = (3 - j) + shapeY;
+            i32 col = i + shapeX; 
+            if (shape.Data[(j * 4) + i]) {
+                field_set_cell(field, row, col, shape.ID);
+            }
+        }
+    }
+}
+
+static bool field_check_line(u32* field, u32 row) {
+    bool isFull = true;
+    for (i32 i = 0; i < FIELD_WIDTH; i++) {
+        if (!field[row * FIELD_WIDTH + i]) {
+            isFull = false;
+            break;
+        }
+    }
+    return isFull;
 }
 
 static void game_next_shape(Context* context, u32 ID) {
     context->Game->PlayerX = 3;
-    context->Game->PlayerY = 16;
-    context->Game->CurrentShape = context->Game->NextShape;
+    context->Game->PlayerY = 14;
+    context->Game->ActiveShape = context->Game->NextShape;
     context->Game->NextShape = s_Shapes[ID];
     context->Game->CanSwap = true;
 }
 
-static bool game_try_move(Context* context, i32 dx, i32 dy) {
-    if (!field_check_collision(
-        context->Game->Field, 
-        context->Game->CurrentShape, 
-        context->Game->PlayerX + dx, 
-        context->Game->PlayerY + dy
-        )
-    ) {
-        context->Game->PlayerX += dx;
-        context->Game->PlayerY += dy;
-        return true;
+static bool game_check_collision(Context* context, Shape shape, i32 shapeX, i32 shapeY) {
+    for (i32 i = 0; i < 4; i++) {
+        for (i32 j = 0; j < 4; j++) {
+            i32 row = (3 - j) + shapeY;
+            i32 col = i + shapeX;
+            bool isBoundary = (col >= FIELD_WIDTH || col < 0) || (row < 0);
+            bool fieldVal = isBoundary;
+            if (row < FIELD_HEIGHT) {
+                fieldVal |= (bool)(context->Game->Field[row][col]);
+            }
+            bool collision = (bool)shape.Data[(j * 4) + i] && fieldVal;
+            if (collision) { 
+                return true;
+            }
+        }
     }
-
     return false;
 }
 
-static void game_reset_cursor(Context* context) {
-    context->Game->PlayerX = 3;
-    context->Game->PlayerY = 16;
+static void game_zero_field(Context* context) {
+    for (i32 j = 0; j < FIELD_HEIGHT; j++) {
+        for (i32 i = 0; i < FIELD_WIDTH; i++) {
+            context->Game->Field[j][i] = 0;
+        }
+    }
+}
+
+static void game_clear_lines(Context* context) {
+    u32 lineCount = 0;
+    for (i32 j = FIELD_HEIGHT - 1; j >= 0; j--) {
+        if (field_check_line(context->Game->Field[0], j)) {
+            // Delete the line and move everything down to adjust.
+            // Iterate upwards setting each row to the value of the row above.
+            for (i32 row = j; row < FIELD_HEIGHT - 1; row++) {
+                memcpy(context->Game->Field[row], context->Game->Field[row + 1], sizeof(u32) * FIELD_WIDTH);
+            }
+            // Zero out the top row to simulate pulling an empty row from above.
+            memset(context->Game->Field[FIELD_HEIGHT - 1], 0, sizeof(u32) * FIELD_WIDTH);
+
+            // Increment linecount for scoring.
+            lineCount ++;
+        }
+    }
+
+    context->Game->TimeToMoveDown *= pow(0.96, lineCount);
 }
 
 /*
-    Transitions for each state
+    Transitions for each state.
 */
 
-static void game_restart(Context* context) {
+static void game_start_play(Context* context) {
     context->Game->CanSwap = true;
+    context->Game->NextShape = s_Shapes[RandU32(1, 7)];
     context->Game->GameState = GameState::Playing;
+    game_next_shape(context, RandU32(1, 7));
     context->Game->ElapsedGameTime = 0.0;
     context->Game->ElapsedSinceLastMoveDown = 0.0;
-    context->Game->ElapsedSinceLastSlide = 0.0;
-    context->Game->TimeToMoveDown = INIT_DROP_TIME;
-
-
-    context->Game->NextShape = s_Shapes[RandU32(1, 7)];
-    game_next_shape(context, RandU32(1, 7));
-    game_reset_cursor(context);
-
-    field_clear(context->Game->Field);
+    context->Game->TimeToMoveDown = 0.5;
 }
 
 /*
-    Input processing & logical update for each state
+    Input processing for each state.
 */
 
 static void gamestate_start_update(Context* context) {
     if (input_key_was_pressed_this_frame(context->Inputs->Space)) {
-        game_restart(context);
+        game_start_play(context);
     }
 }
 
 static void gamestate_playing_update(Context* context) {
-
-    // Check for a gameover
-
-    if (game_check_lose(context)) {
-        context->Game->GameState = GameState::GameOver;
-    }
-
-    // Handle piece swap
-
     if (input_key_was_pressed_this_frame(context->Inputs->Swap) && context->Game->CanSwap) {
-        shape_swap(context->Game->CurrentShape, context->Game->NextShape);
-        game_reset_cursor(context);
+        game_swap_shapes(context);
         context->Game->CanSwap = false;
     }
 
-    // Handle rotation
-
     if (input_key_was_pressed_this_frame(context->Inputs->Up)) {
-        Shape shape = context->Game->CurrentShape;
+        Shape shape = context->Game->ActiveShape;
         shape_rotate(shape);
-        if (!field_check_collision(context->Game->Field, shape, context->Game->PlayerX, context->Game->PlayerY)) {
-            shape_rotate(context->Game->CurrentShape);
+        if (!game_check_collision(context, shape, context->Game->PlayerX, context->Game->PlayerY)) {
+            shape_rotate(context->Game->ActiveShape);
         }
     }
 
-    // Handle horizontal movement
-
     if (input_key_was_pressed_this_frame(context->Inputs->Right)) {
-        game_try_move(context, 1, 0);
-        context->Game->ElapsedSinceLastSlide = 0.0;
-    }
-
-    if (input_key_was_held_this_frame(context->Inputs->Right)) {
-        if (context->Game->ElapsedSinceLastSlide > QUICK_SLIDE_TIME) {
-            game_try_move(context, 1, 0);
-            context->Game->ElapsedSinceLastSlide = 0.0;
+        if (!game_check_collision(
+            context, 
+            context->Game->ActiveShape, 
+            context->Game->PlayerX + 1, 
+            context->Game->PlayerY
+            )
+        ) {
+            context->Game->PlayerX ++;
+        }
+    } else if (context->Inputs->Right.IsRepeat) {
+        if (!game_check_collision(
+            context, 
+            context->Game->ActiveShape, 
+            context->Game->PlayerX + 1, 
+            context->Game->PlayerY
+            )
+        ) {
+            context->Game->PlayerX ++;
         }
     }
 
     if (input_key_was_pressed_this_frame(context->Inputs->Left)) {
-        game_try_move(context, -1, 0);
-        context->Game->ElapsedSinceLastSlide = 0.0;
-    }
-
-    if (input_key_was_held_this_frame(context->Inputs->Left)) {
-        if (context->Game->ElapsedSinceLastSlide > QUICK_SLIDE_TIME) {
-            game_try_move(context, -1, 0);
-            context->Game->ElapsedSinceLastSlide = 0.0;
+        if (!game_check_collision(
+            context, 
+            context->Game->ActiveShape, 
+            context->Game->PlayerX - 1, 
+            context->Game->PlayerY
+            )
+        ) {
+            context->Game->PlayerX --;
         }
-    }
-
-    // Handle downwards movement
-
-    if (input_key_was_held_this_frame(context->Inputs->Down)) {
-        if (context->Game->ElapsedSinceLastMoveDown > QUICK_DROP_TIME) {
-            if (!game_try_move(context, 0, -1)) {
-                field_place_shape(
-                    context->Game->Field, 
-                    context->Game->CurrentShape,
-                    context->Game->PlayerX,
-                    context->Game->PlayerY
-                );
-                game_next_shape(context, RandU32(1, 7));
-                game_reset_cursor(context);
-            }
-            context->Game->ElapsedSinceLastMoveDown = 0.0;
+    } else if (context->Inputs->Left.IsRepeat) {
+        if (!game_check_collision(
+            context, 
+            context->Game->ActiveShape, 
+            context->Game->PlayerX - 1, 
+            context->Game->PlayerY
+            )
+        ) {
+            context->Game->PlayerX --;
         }
     }
 
     if (input_key_was_pressed_this_frame(context->Inputs->Down)) {
-        if (!game_try_move(context, 0, -1)) {
+        if (!game_check_collision(
+            context, 
+            context->Game->ActiveShape, 
+            context->Game->PlayerX, 
+            context->Game->PlayerY - 1
+            )
+        ) {
+            context->Game->PlayerY --;
+        } else {
             field_place_shape(
-                context->Game->Field, 
-                context->Game->CurrentShape,
+                context->Game->Field[0], 
+                context->Game->ActiveShape,
                 context->Game->PlayerX,
                 context->Game->PlayerY
             );
             game_next_shape(context, RandU32(1, 7));
-            game_reset_cursor(context);
         }
+
         context->Game->ElapsedSinceLastMoveDown = 0.0;
     }
 
-    // Handle quick-drop
-
     if (input_key_was_pressed_this_frame(context->Inputs->Space)) {
         i32 dy = 1;
-        while(!field_check_collision(
-            context->Game->Field, 
-            context->Game->CurrentShape, 
+        while(!game_check_collision(
+            context, 
+            context->Game->ActiveShape, 
             context->Game->PlayerX, 
             context->Game->PlayerY - dy
         )) {
             dy ++;
         }
-        
+        context->Game->PlayerY -= dy - 1;
         field_place_shape(
-            context->Game->Field, 
-            context->Game->CurrentShape,
+            context->Game->Field[0], 
+            context->Game->ActiveShape,
             context->Game->PlayerX,
-            context->Game->PlayerY - (dy - 1)
+            context->Game->PlayerY
         );
-        
-        context->AudioEngine.play(context->Game->KickSFX);
         game_next_shape(context, RandU32(1, 7));
-        game_reset_cursor(context);
 
         context->Game->ElapsedSinceLastMoveDown = 0.0;
     }
-
-    // Handle pause
 
     if (input_key_was_pressed_this_frame(context->Inputs->Back)) {
         context->Game->GameState = GameState::Paused;
         return;
     }
 
-    // Rest of turn logic
-
     if (context->Game->ElapsedSinceLastMoveDown > context->Game->TimeToMoveDown) {
-        if (!game_try_move(context, 0, -1)) {
+        if (!game_check_collision(
+            context, 
+            context->Game->ActiveShape, 
+            context->Game->PlayerX, 
+            context->Game->PlayerY - 1
+            )
+        ) {
+            context->Game->PlayerY --;
+        } else {
             field_place_shape(
-                context->Game->Field, 
-                context->Game->CurrentShape,
+                context->Game->Field[0], 
+                context->Game->ActiveShape,
                 context->Game->PlayerX,
                 context->Game->PlayerY
             );
-            context->AudioEngine.play(context->Game->KickSFX);
             game_next_shape(context, RandU32(1, 7));
-            game_reset_cursor(context);
         }
 
         context->Game->ElapsedSinceLastMoveDown = 0.0;
     }
 
     game_clear_lines(context);
-
-    CX_INFO("%lf", context->Game->TimeToMoveDown);
 }
 
 static void gamestate_paused_update(Context* context) {
@@ -389,13 +527,9 @@ static void gamestate_paused_update(Context* context) {
 
 static void gamestate_gameover_update(Context* context) {
     if (input_key_was_pressed_this_frame(context->Inputs->Space)) {
-        game_restart(context);
+        context->Game->GameState = GameState::Playing;
     }
 }
-
-/*
-    Main Game procedures.
-*/
 
 void game_init(Context* context) {
     context->Game->MainFontLarge = TTF_OpenFont("pico/pico-8.ttf", FONT_SIZE_LARGE);
@@ -406,25 +540,19 @@ void game_init(Context* context) {
 
     context->Game->MainFontSmall = TTF_OpenFont("pico/pico-8.ttf", FONT_SIZE_SMALL);
     CX_ASSERT(context->Game->MainFontSmall != NULL, "Failed to load font!");
+    
+    game_zero_field(context);
 
-    context->Game->BGM.load("audio/bgm_trimmed.ogg");
-    context->Game->BGM.setLooping(1);
-    context->Game->BGM.setVolume(0.5f);
-    context->AudioEngine.play(context->Game->BGM);
-
-    context->Game->KickSFX.load("audio/click2.wav");
-    context->Game->KickSFX.setLooping(0);
+    context->Game->DeltaTime = 1.0/60.0;
+    context->MainClock->Tick();
 
     context->Game->GameState = GameState::Start;
 }
 
-void game_shutdown(Context* context) {
-    // TODO: Clean up resources here.
-}
-
-void game_update_and_render(Context* context, f64 dt) {
-
-    // Run the base update for current state.
+void game_update_and_render(void* mem) {
+    Context* context = (Context*)mem;
+    
+    game_handle_events(context);
 
     switch (context->Game->GameState) {
         case GameState::Start:
@@ -439,38 +567,36 @@ void game_update_and_render(Context* context, f64 dt) {
         case GameState::GameOver:
             gamestate_gameover_update(context);
             break;
+
     }
 
-    // Rendering
-
-    game_render_background(context);
     game_render_field(context, 0, 0);
     game_render_shape_preview(context, 480, 224);
 
     draw_text_centered(
-        context->Renderer,
+        context,
         context->Game->MainFontLarge,
         "tetris!",
-        COLOR_TEXT_DARK,
-        544, 48
+        {1.0, 1.0, 1.0, 1.0},
+        544, 544
     );
-
-    game_render_decorations(context);
 
     if (context->Game->GameState != GameState::Playing) {
         draw_quad_filled(
-            context->Renderer,
-            COLOR_OVERLAY,
-            { 0, 0, (f32)context->WindowWidth, (f32)context->WindowHeight }
+            context,
+            {0.1, 0.1, 0.2, 0.6},
+            {
+                0, 0, (f32)context->WindowWidth, (f32)context->WindowHeight
+            }
         );
     }
 
     if (context->Game->GameState == GameState::Start) {
         draw_text_centered(
-            context->Renderer,
+            context,
             context->Game->MainFontLarge,
             "press space to begin",
-            COLOR_TEXT_LIGHT,
+            {1.0, 1.0, 1.0, 1.0},
             context->WindowWidth / 2,
             context->WindowHeight / 2
         );
@@ -478,36 +604,28 @@ void game_update_and_render(Context* context, f64 dt) {
 
     if (context->Game->GameState == GameState::Paused) {
         draw_text_centered(
-            context->Renderer,
+            context,
             context->Game->MainFontLarge,
             "paused",
-            COLOR_TEXT_LIGHT,
-            context->WindowWidth / 2,
-            context->WindowHeight / 2
+            {1.0, 1.0, 1.0, 1.0},
+            192, 544
         );
     }
 
     if (context->Game->GameState == GameState::GameOver) {
         draw_text_centered(
-            context->Renderer,
+            context,
             context->Game->MainFontLarge,
-            "game over",
-            COLOR_TEXT_LIGHT,
-            context->WindowWidth / 2,
-            (context->WindowHeight / 2) - 24
-        );
-
-        draw_text_centered(
-            context->Renderer,
-            context->Game->MainFontMedium,
             "press space to play again",
-            COLOR_TEXT_LIGHT,
+            {1.0, 1.0, 1.0, 1.0},
             context->WindowWidth / 2,
-            (context->WindowHeight / 2) + 24
+            context->WindowHeight / 2
         );
     }
 
-    context->Game->ElapsedGameTime += dt;
-    context->Game->ElapsedSinceLastMoveDown += dt;
-    context->Game->ElapsedSinceLastSlide += dt;
+    game_swap_buffers(context);
+
+    context->Game->DeltaTime = context->MainClock->Tick();
+    context->Game->ElapsedGameTime += context->Game->DeltaTime;
+    context->Game->ElapsedSinceLastMoveDown += context->Game->DeltaTime;
 }

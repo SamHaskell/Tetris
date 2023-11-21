@@ -11,5 +11,4 @@ struct Shape {
 };
 
 void shape_rotate(Shape& shape);
-void shape_render(SDL_Renderer* renderer, Shape& shape, i32 x, i32 y);
-void shape_swap(Shape& a, Shape& b);
+void shape_render(Context* context, Shape& shape, f32 x, f32 y);
