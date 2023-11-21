@@ -13,6 +13,25 @@ struct Context;
 #define FONT_SIZE_MEDIUM 24
 #define FONT_SIZE_SMALL 16
 
+#define COLOR_BACKGROUND {0.976, 0.90, 0.830, 1.0}
+#define COLOR_WALLS {0.676, 0.50, 0.430, 1.0}
+#define COLOR_OVERLAY {0.18, 0.1, 0.14, 0.8}
+
+#define COLOR_TEXTBACKGROUND {0.8, 0.8, 0.8, 0.2}
+#define COLOR_TEXT_DARK {0.1, 0.1, 0.16, 1.0}
+#define COLOR_TEXT_LIGHT {0.9, 0.9, 0.84, 1.0}
+
+#define COLOR_ACCENT {0.676, 0.50, 0.430, 1.0}
+
+// Time it takes for the piece to move down one row when no inputs are pressed at the start of the game.
+#define INIT_DROP_TIME 0.8
+
+// Time it takes for the piece to move down one row when down is held.
+#define QUICK_DROP_TIME 0.1
+
+// Time it takes for the piece to slide to the side one col when left/right is held.
+#define QUICK_SLIDE_TIME 0.1
+
 enum class GameState {
     Start,
     Paused,
@@ -41,9 +60,10 @@ struct Game {
     f64 DeltaTime = 0.0;
     f64 ElapsedGameTime = 0.0;
     f64 ElapsedSinceLastMoveDown = 0.0;
-    f64 TimeToMoveDown = 0.8;
-    f64 LockTime = 0.0;
-    f64 LockDelay = 0.5;
+    f64 ElapsedSinceLastSlide = 0.0;
+    f64 TimeToMoveDown = INIT_DROP_TIME;
+    // f64 LockTime = 0.0;
+    // f64 LockDelay = 0.5;
 };
 
 void game_init(Context* context);

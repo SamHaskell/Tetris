@@ -2,25 +2,6 @@
 #include "core/platform.hpp"
 #include "maths/random.hpp"
 
-#define COLOR_BACKGROUND {0.976, 0.90, 0.830, 1.0}
-#define COLOR_WALLS {0.676, 0.50, 0.430, 1.0}
-#define COLOR_OVERLAY {0.18, 0.1, 0.14, 0.8}
-
-#define COLOR_TEXTBACKGROUND {0.8, 0.8, 0.8, 0.2}
-#define COLOR_TEXT_DARK {0.1, 0.1, 0.16, 1.0}
-#define COLOR_TEXT_LIGHT {0.9, 0.9, 0.84, 1.0}
-
-#define COLOR_ACCENT {0.676, 0.50, 0.430, 1.0}
-
-// Time it takes for the piece to move down one row when no inputs are pressed at the start of the game.
-#define INIT_DROP_TIME 0.8
-
-// Time it takes for the piece to move down one row when down is held.
-#define QUICK_DROP_TIME 0.1
-
-// Time it takes for the piece to slide to the side one col when left/right is held.
-#define QUICK_SLIDE_TIME 0.1
-
 static Vec4 s_Colors[8] = {
     COLOR_BACKGROUND,
     {0.000, 0.378, 0.576, 1.0},
@@ -116,7 +97,7 @@ static Shape s_Shapes[8] = {
 };
 
 /*
-    Rendering procedures.
+    Rendering procedures
 */
 
 static void game_render_background(Context* context) {
@@ -182,28 +163,12 @@ static void game_render_shape_preview(Context* context, i32 left, i32 top) {
     );
 }
 
-static bool game_try_move(Context* context, i32 dx, i32 dy) {
-    if (!field_check_collision(
-        context->Game->Field, 
-        context->Game->CurrentShape, 
-        context->Game->PlayerX + dx, 
-        context->Game->PlayerY + dy
-        )
-    ) {
-        context->Game->PlayerX += dx;
-        context->Game->PlayerY += dy;
-        return true;
-    }
-
-    return false;
-}
-
 /*
     Following GameBoy Tetris rules:
-    A loss occurs when a piece locks on its starting position twice in a row.
-    It is possible to move the piece out from existing blocks.
+    A loss occurs when a piece locks on its starting position twice in a row
+    It is possible to move the piece out from existing blocks
 
-    TODO: Implement lock delay so that this doesn't feel unfair.
+    TODO: Implement lock delay so that this doesn't feel unfair
 */
 
 static bool game_check_lose(Context* context) {
@@ -224,46 +189,73 @@ static void game_next_shape(Context* context, u32 ID) {
     context->Game->CanSwap = true;
 }
 
+static bool game_try_move(Context* context, i32 dx, i32 dy) {
+    if (!field_check_collision(
+        context->Game->Field, 
+        context->Game->CurrentShape, 
+        context->Game->PlayerX + dx, 
+        context->Game->PlayerY + dy
+        )
+    ) {
+        context->Game->PlayerX += dx;
+        context->Game->PlayerY += dy;
+        return true;
+    }
+
+    return false;
+}
+
+static void game_reset_cursor(Context* context) {
+    context->Game->PlayerX = 3;
+    context->Game->PlayerY = 16;
+}
+
 /*
-    Transitions for each state.
+    Transitions for each state
 */
 
-static void game_start_play(Context* context) {
+static void game_restart(Context* context) {
     context->Game->CanSwap = true;
     context->Game->GameState = GameState::Playing;
     context->Game->ElapsedGameTime = 0.0;
     context->Game->ElapsedSinceLastMoveDown = 0.0;
     context->Game->TimeToMoveDown = 0.5;
 
+
     context->Game->NextShape = s_Shapes[RandU32(1, 7)];
     game_next_shape(context, RandU32(1, 7));
+    game_reset_cursor(context);
 
     field_clear(context->Game->Field);
 }
 
 /*
-    Input processing & logical update for each state.
+    Input processing & logical update for each state
 */
 
 static void gamestate_start_update(Context* context) {
     if (input_key_was_pressed_this_frame(context->Inputs->Space)) {
-        game_start_play(context);
+        game_restart(context);
     }
 }
 
 static void gamestate_playing_update(Context* context) {
-    
-    // Check for a gameover.
+
+    // Check for a gameover
+
     if (game_check_lose(context)) {
         context->Game->GameState = GameState::GameOver;
     }
 
+    // Handle piece swap
+
     if (input_key_was_pressed_this_frame(context->Inputs->Swap) && context->Game->CanSwap) {
         shape_swap(context->Game->CurrentShape, context->Game->NextShape);
-        context->Game->PlayerX = 3;
-        context->Game->PlayerY = 16;
+        game_reset_cursor(context);
         context->Game->CanSwap = false;
     }
+
+    // Handle rotation
 
     if (input_key_was_pressed_this_frame(context->Inputs->Up)) {
         Shape shape = context->Game->CurrentShape;
@@ -272,6 +264,8 @@ static void gamestate_playing_update(Context* context) {
             shape_rotate(context->Game->CurrentShape);
         }
     }
+
+    // Handle horizontal movement
 
     if (input_key_was_pressed_this_frame(context->Inputs->Right)) {
         game_try_move(context, 1, 0);
@@ -285,6 +279,8 @@ static void gamestate_playing_update(Context* context) {
         game_try_move(context, -1, 0);
     }
 
+    // Handle downwards movement
+
     if (input_key_was_pressed_this_frame(context->Inputs->Down)) {
         if (!game_try_move(context, 0, -1)) {
             field_place_shape(
@@ -294,9 +290,12 @@ static void gamestate_playing_update(Context* context) {
                 context->Game->PlayerY
             );
             game_next_shape(context, RandU32(1, 7));
+            game_reset_cursor(context);
         }
         context->Game->ElapsedSinceLastMoveDown = 0.0;
     }
+
+    // Handle quick-drop
 
     if (input_key_was_pressed_this_frame(context->Inputs->Space)) {
         i32 dy = 1;
@@ -308,25 +307,29 @@ static void gamestate_playing_update(Context* context) {
         )) {
             dy ++;
         }
-
-        context->Game->PlayerY -= dy - 1;
+        
         field_place_shape(
             context->Game->Field, 
             context->Game->CurrentShape,
             context->Game->PlayerX,
-            context->Game->PlayerY
+            context->Game->PlayerY - (dy - 1)
         );
         
         context->AudioEngine.play(context->Game->KickSFX);
         game_next_shape(context, RandU32(1, 7));
+        game_reset_cursor(context);
 
         context->Game->ElapsedSinceLastMoveDown = 0.0;
     }
+
+    // Handle pause
 
     if (input_key_was_pressed_this_frame(context->Inputs->Back)) {
         context->Game->GameState = GameState::Paused;
         return;
     }
+
+    // Rest of turn logic
 
     if (context->Game->ElapsedSinceLastMoveDown > context->Game->TimeToMoveDown) {
         if (!game_try_move(context, 0, -1)) {
@@ -338,6 +341,7 @@ static void gamestate_playing_update(Context* context) {
             );
             context->AudioEngine.play(context->Game->KickSFX);
             game_next_shape(context, RandU32(1, 7));
+            game_reset_cursor(context);
         }
 
         context->Game->ElapsedSinceLastMoveDown = 0.0;
@@ -354,7 +358,7 @@ static void gamestate_paused_update(Context* context) {
 
 static void gamestate_gameover_update(Context* context) {
     if (input_key_was_pressed_this_frame(context->Inputs->Space)) {
-        game_start_play(context);
+        game_restart(context);
     }
 }
 
@@ -372,7 +376,7 @@ void game_init(Context* context) {
     context->Game->MainFontSmall = TTF_OpenFont("pico/pico-8.ttf", FONT_SIZE_SMALL);
     CX_ASSERT(context->Game->MainFontSmall != NULL, "Failed to load font!");
 
-    context->Game->BGM.load("audio/realm.mp3");
+    context->Game->BGM.load("audio/bgm.mp3");
     context->Game->BGM.setLooping(1);
     context->AudioEngine.play(context->Game->BGM);
 
@@ -473,4 +477,5 @@ void game_update_and_render(Context* context, f64 dt) {
 
     context->Game->ElapsedGameTime += dt;
     context->Game->ElapsedSinceLastMoveDown += dt;
+    context->Game->ElapsedSinceLastSlide += dt;
 }
