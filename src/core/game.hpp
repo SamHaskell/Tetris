@@ -31,7 +31,7 @@ struct Context;
 #define QUICK_DROP_TIME 0.1
 
 // Time it takes for the piece to slide to the side one col when left/right is held.
-#define QUICK_SLIDE_TIME 0.2
+#define QUICK_SLIDE_TIME 0.1
 
 enum class GameState {
     Start,
@@ -57,16 +57,24 @@ struct Game {
     Shape CurrentShape;
     Shape NextShape;
     bool CanSwap;
-    
-    f64 DeltaTime = 0.0;
+
+    /*
+        TODO: Implement soft-locking.
+    */
+
+    // bool IsSoftLocked;
+    // f64 LockTime = 0.0;
+    // f64 LockDelay = 0.5;
+
     f64 ElapsedGameTime = 0.0;
     f64 ElapsedSinceLastMoveDown = 0.0;
     f64 ElapsedSinceLastSlide = 0.0;
     f64 TimeToMoveDown = INIT_DROP_TIME;
-    // f64 LockTime = 0.0;
-    // f64 LockDelay = 0.5;
 };
 
 void game_init(Context* context);
 void game_shutdown(Context* context);
 void game_update_and_render(Context* context, f64 dt);
+
+void game_over(Context* context);
+void game_restart(Context* context);

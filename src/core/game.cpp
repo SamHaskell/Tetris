@@ -163,30 +163,31 @@ static void game_render_shape_preview(Context* context, i32 left, i32 top) {
     );
 }
 
-/*
-    Following GameBoy Tetris rules:
-    A loss occurs when a piece locks on its starting position twice in a row
-    It is possible to move the piece out from existing blocks
-
-    TODO: Implement lock delay so that this doesn't feel unfair
-*/
-
-static bool game_check_lose(Context* context) {
-
-    return false;
-}
-
 static void game_clear_lines(Context* context) {
     u32 lineCount = field_clear_lines(context->Game->Field);
     context->Game->TimeToMoveDown *= pow(0.97, lineCount);
 }
 
-static void game_next_shape(Context* context, u32 ID) {
+static void game_reset_cursor(Context* context) {
     context->Game->PlayerX = 3;
     context->Game->PlayerY = 16;
+}
+
+static void game_next_shape(Context* context, u32 ID) {
+    game_reset_cursor(context);
     context->Game->CurrentShape = context->Game->NextShape;
     context->Game->NextShape = s_Shapes[ID];
     context->Game->CanSwap = true;
+
+    if (field_check_collision(
+        context->Game->Field,
+        context->Game->CurrentShape,
+        context->Game->PlayerX,
+        context->Game->PlayerY
+    )) {
+        CX_INFO("Game over");
+        game_over(context);
+    }
 }
 
 static bool game_try_move(Context* context, i32 dx, i32 dy) {
@@ -205,29 +206,28 @@ static bool game_try_move(Context* context, i32 dx, i32 dy) {
     return false;
 }
 
-static void game_reset_cursor(Context* context) {
-    context->Game->PlayerX = 3;
-    context->Game->PlayerY = 16;
-}
-
 /*
     Transitions for each state
 */
 
-static void game_restart(Context* context) {
+void game_over(Context* context) {
+    context->Game->GameState = GameState::GameOver;
+}
+
+void game_restart(Context* context) {
+    CX_INFO("Restarting!");
+    field_clear(context->Game->Field);
+
     context->Game->CanSwap = true;
     context->Game->GameState = GameState::Playing;
+
     context->Game->ElapsedGameTime = 0.0;
     context->Game->ElapsedSinceLastMoveDown = 0.0;
     context->Game->ElapsedSinceLastSlide = 0.0;
     context->Game->TimeToMoveDown = INIT_DROP_TIME;
 
-
     context->Game->NextShape = s_Shapes[RandU32(1, 7)];
     game_next_shape(context, RandU32(1, 7));
-    game_reset_cursor(context);
-
-    field_clear(context->Game->Field);
 }
 
 /*
@@ -241,12 +241,6 @@ static void gamestate_start_update(Context* context) {
 }
 
 static void gamestate_playing_update(Context* context) {
-
-    // Check for a gameover
-
-    if (game_check_lose(context)) {
-        context->Game->GameState = GameState::GameOver;
-    }
 
     // Handle piece swap
 
@@ -304,7 +298,6 @@ static void gamestate_playing_update(Context* context) {
                     context->Game->PlayerY
                 );
                 game_next_shape(context, RandU32(1, 7));
-                game_reset_cursor(context);
             }
             context->Game->ElapsedSinceLastMoveDown = 0.0;
         }
@@ -319,7 +312,6 @@ static void gamestate_playing_update(Context* context) {
                 context->Game->PlayerY
             );
             game_next_shape(context, RandU32(1, 7));
-            game_reset_cursor(context);
         }
         context->Game->ElapsedSinceLastMoveDown = 0.0;
     }
@@ -346,7 +338,6 @@ static void gamestate_playing_update(Context* context) {
         
         context->AudioEngine.play(context->Game->KickSFX);
         game_next_shape(context, RandU32(1, 7));
-        game_reset_cursor(context);
 
         context->Game->ElapsedSinceLastMoveDown = 0.0;
     }
@@ -370,15 +361,12 @@ static void gamestate_playing_update(Context* context) {
             );
             context->AudioEngine.play(context->Game->KickSFX);
             game_next_shape(context, RandU32(1, 7));
-            game_reset_cursor(context);
         }
 
         context->Game->ElapsedSinceLastMoveDown = 0.0;
     }
 
     game_clear_lines(context);
-
-    CX_INFO("%lf", context->Game->TimeToMoveDown);
 }
 
 static void gamestate_paused_update(Context* context) {

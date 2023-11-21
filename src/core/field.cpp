@@ -3,7 +3,7 @@
 #include "core/shape.hpp"
 
 void field_clear(u32* field) {
-    memset(field, 0, FIELD_SIZE);
+    memset(field, 0, sizeof(u32) * FIELD_SIZE);
 }
 
 void field_set_cell(u32* field, u32 row, u32 col, u32 value) {
