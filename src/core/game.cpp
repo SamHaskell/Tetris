@@ -96,6 +96,14 @@ static Shape s_Shapes[8] = {
     },
 };
 
+static u32 s_LineClearScores[5] = {
+    0,   // No clear
+    100, // Single
+    300, // Double
+    500, // Triple
+    800  // Tetris
+};
+
 /*
     Rendering procedures
 */
@@ -144,13 +152,31 @@ static void game_render_field(Context* context, i32 left, i32 top) {
 }
 
 static void game_render_score(Context* context, i32 left, i32 top) {
-    // TODO: Render the score counter / statistics.
+    char charBuf[64];
+    snprintf(charBuf, 64, "score %06d", context->Game->Score);
+    draw_text(
+        context->Renderer,
+        context->Game->MainFontMedium,
+        charBuf,
+        COLOR_TEXT_DARK,
+        left,
+        top
+    );
 }
 
 static void game_render_timer(Context* context, i32 left, i32 top) {
     i32 mins = context->Game->ElapsedGameTime / 60;
     i32 seconds = (i32)(context->Game->ElapsedGameTime) % 60;
-    CX_INFO("Time: %i: %i", mins, seconds);
+    char charBuf[64];
+    snprintf(charBuf, 64, "time %02d:%02d", mins, seconds);
+    draw_text(
+        context->Renderer,
+        context->Game->MainFontMedium,
+        charBuf,
+        COLOR_TEXT_DARK,
+        left,
+        top
+    );
 }
 
 static void game_render_shape_preview(Context* context, i32 left, i32 top) {
@@ -172,6 +198,7 @@ static void game_render_shape_preview(Context* context, i32 left, i32 top) {
 static void game_clear_lines(Context* context) {
     u32 lineCount = field_clear_lines(context->Game->Field);
     context->Game->TimeToMoveDown *= pow(0.97, lineCount);
+    context->Game->Score += s_LineClearScores[lineCount];
 }
 
 static void game_reset_cursor(Context* context) {
@@ -226,6 +253,8 @@ void game_restart(Context* context) {
 
     context->Game->CanSwap = true;
     context->Game->GameState = GameState::Playing;
+
+    context->Game->Score = 0;
 
     context->Game->ElapsedGameTime = 0.0;
     context->Game->ElapsedSinceLastMoveDown = 0.0;
@@ -447,10 +476,10 @@ void game_update_and_render(Context* context, f64 dt) {
 
     game_render_background(context);
     game_render_field(context, 0, 0);
-    game_render_shape_preview(context, 480, 224);
+    game_render_shape_preview(context, 480, 160);
 
-    game_render_score(context, 480, 224 + 192);
-    game_render_timer(context, 480, 224 + 192 + 32);
+    game_render_score(context, 448, 224 + 224);
+    game_render_timer(context, 448, 224 + 256);
 
     draw_text_centered(
         context->Renderer,

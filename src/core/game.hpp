@@ -62,6 +62,8 @@ struct Game {
     Shape NextShape;
     bool CanSwap;
 
+    u32 Score;
+
     /*
         TODO: Implement soft-locking.
     */
