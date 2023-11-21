@@ -50,6 +50,7 @@ void draw_quad_filled(SDL_Renderer* renderer, Vec4 color, Rect2D rect);
 void draw_quad_outline(SDL_Renderer* renderer, Vec4 color, Rect2D rect);
 void draw_text(SDL_Renderer* renderer, TTF_Font* font, const char* text, Vec4 color, i32 left, i32 bottom);
 void draw_text_centered(SDL_Renderer* renderer, TTF_Font* font, const char* text, Vec4 color, i32 centerX, i32 centerY);
+void draw_text_right_aligned(SDL_Renderer* renderer, TTF_Font* font, const char* text, Vec4 color, i32 right, i32 top);
 
 /*
     TODO: Add some sort of platform Audio API to pull direct soloud calls out of game layer.

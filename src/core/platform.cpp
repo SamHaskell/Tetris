@@ -229,6 +229,10 @@ void draw_quad_outline(SDL_Renderer* renderer, Vec4 color, Rect2D rect) {
     SDL_RenderDrawRect(renderer, &drawRect);
 }
 
+/*
+    Probably some cleaner way to do this but it works perfectly fine for now.
+*/
+
 void draw_text(SDL_Renderer* renderer, TTF_Font* font, const char* text, Vec4 color, i32 left, i32 top) {
     SDL_Color textColor = color_from_vec4(color);
 
@@ -286,6 +290,39 @@ void draw_text_centered(SDL_Renderer* renderer, TTF_Font* font, const char* text
     SDL_Rect dst = {
         centerX - (textWidth / 2),
         centerY - (textHeight / 2),
+        textWidth,
+        textHeight
+    };
+
+    SDL_RenderCopy(renderer, tex, NULL, &dst);
+
+    SDL_DestroyTexture(tex);
+}
+
+void draw_text_right_aligned(SDL_Renderer* renderer, TTF_Font* font, const char* text, Vec4 color, i32 right, i32 top) {
+    SDL_Color textColor = color_from_vec4(color);
+
+    SDL_Surface* surface = TTF_RenderText_Blended(
+        font,
+        text,
+        textColor
+    );
+
+    SDL_Texture* tex = SDL_CreateTextureFromSurface(
+        renderer,
+        surface
+    );
+
+    SDL_FreeSurface(surface);
+
+    i32 textWidth;
+    i32 textHeight;
+
+    SDL_QueryTexture(tex, NULL, NULL, &textWidth, &textHeight);
+
+    SDL_Rect dst = {
+        right - textWidth,
+        top,
         textWidth,
         textHeight
     };

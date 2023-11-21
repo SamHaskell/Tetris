@@ -168,13 +168,23 @@ static void game_render_timer(Context* context, i32 left, i32 top) {
     i32 mins = context->Game->ElapsedGameTime / 60;
     i32 seconds = (i32)(context->Game->ElapsedGameTime) % 60;
     char charBuf[64];
-    snprintf(charBuf, 64, "time %02d:%02d", mins, seconds);
+    snprintf(charBuf, 64, "%02d:%02d", mins, seconds);
+    
     draw_text(
+        context->Renderer,
+        context->Game->MainFontMedium,
+        "time",
+        COLOR_TEXT_DARK,
+        left,
+        top
+    );
+
+    draw_text_right_aligned(
         context->Renderer,
         context->Game->MainFontMedium,
         charBuf,
         COLOR_TEXT_DARK,
-        left,
+        left + 192,
         top
     );
 }
