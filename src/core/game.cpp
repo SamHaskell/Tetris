@@ -178,7 +178,7 @@ static bool game_check_lose(Context* context) {
 
 static void game_clear_lines(Context* context) {
     u32 lineCount = field_clear_lines(context->Game->Field);
-    context->Game->TimeToMoveDown *= pow(0.98, lineCount);
+    context->Game->TimeToMoveDown *= pow(0.97, lineCount);
 }
 
 static void game_next_shape(Context* context, u32 ID) {
@@ -219,7 +219,8 @@ static void game_restart(Context* context) {
     context->Game->GameState = GameState::Playing;
     context->Game->ElapsedGameTime = 0.0;
     context->Game->ElapsedSinceLastMoveDown = 0.0;
-    context->Game->TimeToMoveDown = 0.5;
+    context->Game->ElapsedSinceLastSlide = 0.0;
+    context->Game->TimeToMoveDown = INIT_DROP_TIME;
 
 
     context->Game->NextShape = s_Shapes[RandU32(1, 7)];
@@ -269,17 +270,45 @@ static void gamestate_playing_update(Context* context) {
 
     if (input_key_was_pressed_this_frame(context->Inputs->Right)) {
         game_try_move(context, 1, 0);
-    } else if (context->Inputs->Right.IsRepeat) {
-        game_try_move(context, 1, 0);
+        context->Game->ElapsedSinceLastSlide = 0.0;
+    }
+
+    if (input_key_was_held_this_frame(context->Inputs->Right)) {
+        if (context->Game->ElapsedSinceLastSlide > QUICK_SLIDE_TIME) {
+            game_try_move(context, 1, 0);
+            context->Game->ElapsedSinceLastSlide = 0.0;
+        }
     }
 
     if (input_key_was_pressed_this_frame(context->Inputs->Left)) {
         game_try_move(context, -1, 0);
-    } else if (context->Inputs->Left.IsRepeat) {
-        game_try_move(context, -1, 0);
+        context->Game->ElapsedSinceLastSlide = 0.0;
+    }
+
+    if (input_key_was_held_this_frame(context->Inputs->Left)) {
+        if (context->Game->ElapsedSinceLastSlide > QUICK_SLIDE_TIME) {
+            game_try_move(context, -1, 0);
+            context->Game->ElapsedSinceLastSlide = 0.0;
+        }
     }
 
     // Handle downwards movement
+
+    if (input_key_was_held_this_frame(context->Inputs->Down)) {
+        if (context->Game->ElapsedSinceLastMoveDown > QUICK_DROP_TIME) {
+            if (!game_try_move(context, 0, -1)) {
+                field_place_shape(
+                    context->Game->Field, 
+                    context->Game->CurrentShape,
+                    context->Game->PlayerX,
+                    context->Game->PlayerY
+                );
+                game_next_shape(context, RandU32(1, 7));
+                game_reset_cursor(context);
+            }
+            context->Game->ElapsedSinceLastMoveDown = 0.0;
+        }
+    }
 
     if (input_key_was_pressed_this_frame(context->Inputs->Down)) {
         if (!game_try_move(context, 0, -1)) {
@@ -348,6 +377,8 @@ static void gamestate_playing_update(Context* context) {
     }
 
     game_clear_lines(context);
+
+    CX_INFO("%lf", context->Game->TimeToMoveDown);
 }
 
 static void gamestate_paused_update(Context* context) {
@@ -376,8 +407,9 @@ void game_init(Context* context) {
     context->Game->MainFontSmall = TTF_OpenFont("pico/pico-8.ttf", FONT_SIZE_SMALL);
     CX_ASSERT(context->Game->MainFontSmall != NULL, "Failed to load font!");
 
-    context->Game->BGM.load("audio/bgm.mp3");
+    context->Game->BGM.load("audio/bgm_trimmed.ogg");
     context->Game->BGM.setLooping(1);
+    context->Game->BGM.setVolume(0.5f);
     context->AudioEngine.play(context->Game->BGM);
 
     context->Game->KickSFX.load("audio/click2.wav");

@@ -6,6 +6,7 @@
 #include "core/input.hpp"
 
 #include "soloud_wav.h"
+#include "soloud_wavstream.h"
 
 struct Context;
 
@@ -30,7 +31,7 @@ struct Context;
 #define QUICK_DROP_TIME 0.1
 
 // Time it takes for the piece to slide to the side one col when left/right is held.
-#define QUICK_SLIDE_TIME 0.1
+#define QUICK_SLIDE_TIME 0.2
 
 enum class GameState {
     Start,
@@ -44,7 +45,7 @@ struct Game {
     TTF_Font* MainFontMedium;
     TTF_Font* MainFontSmall;
 
-    SoLoud::Wav BGM;
+    SoLoud::WavStream BGM;
     SoLoud::Wav KickSFX;
 
     GameState GameState;
