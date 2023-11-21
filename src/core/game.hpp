@@ -31,7 +31,7 @@ struct Context;
 #define QUICK_DROP_TIME 0.1
 
 // Time it takes for the piece to slide to the side one col when left/right is held.
-#define QUICK_SLIDE_TIME 0.1
+#define QUICK_SLIDE_TIME 0.14
 
 #define MIN_BGM_VOLUME 0.6
 #define MAX_BGM_VOLUME 1.0
