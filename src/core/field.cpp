@@ -70,3 +70,13 @@ u32 field_clear_lines(u32* field) {
     }
     return count;
 }
+
+f32 field_fill_factor(u32* field) {
+    u32 count = 0;
+    for (i32 i = 0; i < FIELD_SIZE; i++) {
+        if (field[i]) {
+            count ++;
+        }
+    }
+    return (f32)count / (f32)(FIELD_SIZE);
+}

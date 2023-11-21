@@ -147,6 +147,12 @@ static void game_render_score(Context* context, i32 left, i32 top) {
     // TODO: Render the score counter / statistics.
 }
 
+static void game_render_timer(Context* context, i32 left, i32 top) {
+    i32 mins = context->Game->ElapsedGameTime / 60;
+    i32 seconds = (i32)(context->Game->ElapsedGameTime) % 60;
+    CX_INFO("Time: %i: %i", mins, seconds);
+}
+
 static void game_render_shape_preview(Context* context, i32 left, i32 top) {
     draw_quad_filled(context->Renderer, COLOR_ACCENT, {(f32)left - 16, (f32)top - 16, 160.0, 160.0});
     draw_quad_filled(context->Renderer, COLOR_BACKGROUND, {(f32)left - 12, (f32)top - 12, 152.0, 152.0});
@@ -240,7 +246,15 @@ static void gamestate_start_update(Context* context) {
     }
 }
 
-static void gamestate_playing_update(Context* context) {
+static void gamestate_playing_update(Context* context, f64 dt) {
+
+    context->Game->ElapsedGameTime += dt;
+    context->Game->ElapsedSinceLastMoveDown += dt;
+    context->Game->ElapsedSinceLastSlide += dt;
+
+    // Update Audio
+    f32 fillFactor = field_fill_factor(context->Game->Field);
+    context->AudioEngine.setVolume(context->Game->BGMHandle, Lerp(MIN_BGM_VOLUME, MAX_BGM_VOLUME, fillFactor));
 
     // Handle piece swap
 
@@ -397,8 +411,8 @@ void game_init(Context* context) {
 
     context->Game->BGM.load("audio/bgm_trimmed.ogg");
     context->Game->BGM.setLooping(1);
-    context->Game->BGM.setVolume(0.5f);
-    context->AudioEngine.play(context->Game->BGM);
+    context->Game->BGM.setVolume(MIN_BGM_VOLUME);
+    context->Game->BGMHandle = context->AudioEngine.play(context->Game->BGM);
 
     context->Game->KickSFX.load("audio/click2.wav");
     context->Game->KickSFX.setLooping(0);
@@ -419,7 +433,7 @@ void game_update_and_render(Context* context, f64 dt) {
             gamestate_start_update(context);
             break;
         case GameState::Playing:
-            gamestate_playing_update(context);
+            gamestate_playing_update(context, dt);
             break;
         case GameState::Paused:
             gamestate_paused_update(context);
@@ -434,6 +448,9 @@ void game_update_and_render(Context* context, f64 dt) {
     game_render_background(context);
     game_render_field(context, 0, 0);
     game_render_shape_preview(context, 480, 224);
+
+    game_render_score(context, 480, 224 + 192);
+    game_render_timer(context, 480, 224 + 192 + 32);
 
     draw_text_centered(
         context->Renderer,
@@ -494,8 +511,4 @@ void game_update_and_render(Context* context, f64 dt) {
             (context->WindowHeight / 2) + 24
         );
     }
-
-    context->Game->ElapsedGameTime += dt;
-    context->Game->ElapsedSinceLastMoveDown += dt;
-    context->Game->ElapsedSinceLastSlide += dt;
 }

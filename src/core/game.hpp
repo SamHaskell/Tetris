@@ -33,6 +33,9 @@ struct Context;
 // Time it takes for the piece to slide to the side one col when left/right is held.
 #define QUICK_SLIDE_TIME 0.1
 
+#define MIN_BGM_VOLUME 0.6
+#define MAX_BGM_VOLUME 1.0
+
 enum class GameState {
     Start,
     Paused,
@@ -45,6 +48,7 @@ struct Game {
     TTF_Font* MainFontMedium;
     TTF_Font* MainFontSmall;
 
+    SoLoud::handle BGMHandle;
     SoLoud::WavStream BGM;
     SoLoud::Wav KickSFX;
 
