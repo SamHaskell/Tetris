@@ -9,7 +9,7 @@ Rect2D::Rect2D(const Point2D& p1, const Point2D& p2) {
         w = p1.x - p2.x;
     }
 
-    if (p1.y < p2.y) {
+    if (p1.y > p2.y) {
         y = p1.y;
         h = p2.y - p1.y;
     } else {

@@ -13,15 +13,44 @@ project "Tetris"
     architecture "x86_64"
 
     files {
+        -- source
         "src/**.h",
         "src/**.c",
         "src/**.hpp",
-        "src/**.cpp"
+        "src/**.cpp",
+
+        -- soloud
+        "vendor/soloud/src/**.h",
+        "vendor/soloud/src/**.c",
+        "vendor/soloud/src/**.cpp",
+
+        "vendor/soloud/include/**.h",
+        "vendor/soloud/include/**.c",
+        "vendor/soloud/include/**.cpp",
+    }
+
+    removefiles {
+        -- soloud
+        "vendor/soloud/src/tools/**.h",
+        "vendor/soloud/src/tools/**.c",
+        "vendor/soloud/src/tools/**.cpp",
+
+        "vendor/soloud/src/c_api/**.h",
+        "vendor/soloud/src/c_api/**.c",
+        "vendor/soloud/src/c_api/**.cpp",
     }
 
     includedirs {
         "src",
-        "vendor"
+        "vendor/soloud/include",
+    }
+
+    defines {
+        "WITH_SDL2_STATIC" -- select soloud backend
+    }
+
+    externalincludedirs {
+        "vendor/soloud/include",
     }
 
     filter "configurations:debug"

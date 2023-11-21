@@ -8,7 +8,7 @@
             "type": "cppdbg",
             "request": "launch",
             "name": "Launch (Debug)",
-            "cwd": "${workspaceFolder}",
+            "cwd": "${workspaceFolder}/assets",
             "program": "${workspaceRoot}/bin/macosx/debug/Tetris",
             "MIMode": "lldb"
         }
