@@ -285,7 +285,7 @@ void draw_text_centered(SDL_Renderer* renderer, TTF_Font* font, const char* text
 
     SDL_Rect dst = {
         centerX - (textWidth / 2),
-        centerY + (textHeight / 2),
+        centerY - (textHeight / 2),
         textWidth,
         textHeight
     };

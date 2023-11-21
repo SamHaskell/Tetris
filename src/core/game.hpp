@@ -24,21 +24,26 @@ struct Game {
     TTF_Font* MainFontLarge;
     TTF_Font* MainFontMedium;
     TTF_Font* MainFontSmall;
-    u32 Field[FIELD_HEIGHT][FIELD_WIDTH];
+
+    SoLoud::Wav BGM;
+    SoLoud::Wav KickSFX;
+
+    GameState GameState;
+    
+    u32 Field[FIELD_SIZE];
     i32 PlayerX;
     i32 PlayerY;
-    Shape ActiveShape;
+    
+    Shape CurrentShape;
     Shape NextShape;
     bool CanSwap;
+    
     f64 DeltaTime = 0.0;
     f64 ElapsedGameTime = 0.0;
     f64 ElapsedSinceLastMoveDown = 0.0;
     f64 TimeToMoveDown = 0.8;
     f64 LockTime = 0.0;
     f64 LockDelay = 0.5;
-    GameState GameState;
-    SoLoud::Wav BGM;
-    SoLoud::Wav KickSFX;
 };
 
 void game_init(Context* context);

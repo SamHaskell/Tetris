@@ -24,7 +24,7 @@ void shape_render(SDL_Renderer* renderer, Shape& shape, i32 x, i32 y) {
             if (shape.Data[(j * 4) + i]) {
                 Rect2D rect = {(f32)(x + i * 32), (f32)(y + j * 32), (f32)32, (f32)32};
                 draw_quad_filled(renderer, shape.Color, rect);
-                draw_quad_outline(renderer, {0.0, 0.0, 0.0, 1.0}, rect);
+                draw_quad_outline(renderer, {0.0, 0.0, 0.0, 0.4}, rect);
             }
         }
     }
